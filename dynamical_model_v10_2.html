@@ -1,0 +1,2048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Dynamical Model of Realization — V10.2 Candidate 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #070B14;
+  --surface:  #0D1626;
+  --surface2: #131F35;
+  --border:   #1A2D4A;
+  --border2:  #243D60;
+  --blue:     #3B82F6;
+  --indigo:   #6366F1;
+  --violet:   #7C3AED;
+  --purple:   #A855F7;
+  --amber:    #F59E0B;
+  --cyan:     #22D3EE;
+  --red:      #EF4444;
+  --text:     #E2ECF8;
+  --text2:    #7B93BB;
+  --text3:    #3D5478;
+  --font-d:   'DM Serif Display', Georgia, serif;
+  --font-ui:  'Syne', system-ui, sans-serif;
+  --font-m:   'IBM Plex Mono', monospace;
+  --emerald:  #10B981;
+  --green:    #22C55E;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-ui);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(59,130,246,.028) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(59,130,246,.028) 1px,transparent 1px);
+  background-size:52px 52px;
+  pointer-events:none;z-index:0;
+}
+.wrap{
+  max-width:880px;margin:0 auto;
+  padding:3rem 1.5rem 5rem;
+  position:relative;z-index:1;
+}
+
+.header{margin-bottom:3.5rem}
+.badge{
+  font-family:var(--font-m);font-size:9.5px;
+  letter-spacing:.14em;color:var(--blue);
+  text-transform:uppercase;margin-bottom:.9rem;
+  display:flex;align-items:center;gap:10px;
+}
+.badge::before{content:'';display:inline-block;width:22px;height:1px;background:var(--blue);opacity:.45}
+h1{
+  font-family:var(--font-d);
+  font-size:clamp(2.1rem,5.5vw,3.2rem);
+  font-weight:400;line-height:1.12;
+  color:var(--text);margin-bottom:.8rem;
+}
+h1 em{color:var(--indigo);font-style:italic}
+.sub{font-size:12.5px;color:var(--text2);line-height:1.75;max-width:500px}
+.sep{color:var(--border2);margin:0 .45em}
+
+.sec{margin-bottom:3rem}
+.sec-label{
+  font-family:var(--font-m);font-size:9px;
+  letter-spacing:.15em;color:var(--text3);
+  text-transform:uppercase;margin-bottom:14px;
+  display:flex;align-items:center;gap:12px;
+}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.ts{font-family:'IBM Plex Mono',monospace;font-size:9px}
+
+.loop-wrap{position:relative;width:100%}
+.loop-svg{width:100%;height:auto;display:block}
+.loop-stage{cursor:pointer;transition:opacity .15s}
+.loop-stage:hover .s-ring{filter:brightness(1.3)}
+.loop-stage.active .s-ring{filter:drop-shadow(0 0 10px var(--ac,#3B82F6))}
+
+/* Feedback arc interactivity */
+.feedback-arc{
+  cursor:pointer;
+  transition:stroke .15s, opacity .15s, filter .15s;
+  pointer-events:stroke;
+}
+.feedback-arc:hover{
+  opacity:0.8 !important;
+  filter:drop-shadow(0 0 4px currentColor);
+  stroke-width:2 !important;
+}
+.feedback-arc.active{
+  opacity:0.8 !important;
+  filter:drop-shadow(0 0 6px currentColor);
+  stroke-width:1.4 !important;
+}
+.loop-svg.feedback-active .feedback-arc:not(.active){
+  opacity:0.15 !important;
+}
+
+.detail{
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:10px;
+  padding:1.25rem 1.4rem;
+  margin-top:1rem;
+  min-height:130px;
+  transition:border-color .25s;
+}
+.d-num{font-family:var(--font-m);font-size:9px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+.d-name{font-family:var(--font-d);font-size:1.25rem;margin-bottom:8px}
+.d-body{font-size:12.5px;color:var(--text2);line-height:1.7}
+.d-meta{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.dtag{
+  font-family:var(--font-m);font-size:8.5px;letter-spacing:.07em;
+  padding:3px 9px;border-radius:3px;
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--text2);text-transform:uppercase;
+}
+
+.out-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+@media(max-width:600px){.out-grid{grid-template-columns:1fr}}
+.out-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:14px 14px 14px 18px;
+  position:relative;overflow:hidden;
+  transition:border-color .2s,transform .15s;
+  cursor:pointer;
+}
+.out-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.out-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--ac,var(--blue));
+}
+.out-lv{font-family:var(--font-m);font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.out-name{font-size:12.5px;font-weight:700;margin-bottom:5px;color:var(--ac,var(--text))}
+.out-body{font-size:11px;color:var(--text2);line-height:1.6}
+
+.mod-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+@media(max-width:500px){.mod-grid{grid-template-columns:1fr}}
+.mod-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:14px;
+}
+.mod-role{font-family:var(--font-m);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.mod-name{font-size:12.5px;font-weight:700;margin-bottom:6px}
+.mod-body{font-size:11px;color:var(--text2);line-height:1.6}
+
+.formula{
+  margin-top:3rem;padding-top:1.5rem;
+  border-top:1px solid var(--border);
+  font-family:var(--font-m);font-size:8.5px;
+  letter-spacing:.09em;color:var(--text3);
+  text-transform:uppercase;line-height:1.8;
+}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.sec{animation:fadeUp .5s ease both}
+.sec:nth-child(1){animation-delay:.05s}
+.sec:nth-child(2){animation-delay:.12s}
+.sec:nth-child(3){animation-delay:.19s}
+.sec:nth-child(4){animation-delay:.26s}
+.sec:nth-child(5){animation-delay:.33s}
+.sec:nth-child(6){animation-delay:.40s}
+.sec:nth-child(7){animation-delay:.47s}
+
+/* Crosslink highlighting */
+.crosslink-active{opacity:.95;filter:brightness(1.15)}
+.crosslink-dim{opacity:.35}
+.topo-click{cursor:pointer;transition:opacity .2s}
+.state-region{cursor:pointer;transition:opacity .2s,filter .2s}
+.state-region:hover{opacity:.8;filter:brightness(1.05)}
+.outcome-point{transition:opacity .2s, filter .2s}
+
+/* Loop animation */
+@keyframes tokenMove {
+  0% { offset-distance: 0%; }
+  100% { offset-distance: 100%; }
+}
+
+/* Custom range sliders */
+input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  height:3px;border-radius:2px;
+  background:var(--border2);outline:none;cursor:pointer;
+  width:100%;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:14px;height:14px;border-radius:50%;
+  background:var(--indigo);
+  border:2px solid var(--bg);
+  box-shadow:0 0 6px rgba(99,102,241,.5);
+  cursor:pointer;
+}
+input[type=range]::-moz-range-thumb{
+  width:14px;height:14px;border-radius:50%;
+  background:var(--indigo);
+  border:2px solid var(--bg);cursor:pointer;
+}
+.reset-btn{
+  font-family:var(--font-m);font-size:8.5px;letter-spacing:.09em;
+  text-transform:uppercase;padding:5px 14px;border-radius:4px;
+  background:transparent;border:1px solid var(--border2);
+  color:var(--text3);cursor:pointer;transition:all .15s;
+  display:inline-block;margin-top:8px;
+}
+.reset-btn:hover{border-color:var(--indigo);color:var(--text2);}
+
+.info-panel {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:1rem;
+  margin:1rem 0;
+  font-size:11px;
+  color:var(--text2);
+  line-height:1.6;
+}
+.info-panel strong{color:var(--text)}
+.math-def{
+  background:var(--surface2);
+  border-left:3px solid var(--indigo);
+  border-radius:4px;
+  padding:.8rem;
+  margin:1rem 0;
+  font-family:var(--font-m);
+  font-size:10px;
+  color:var(--text2);
+  line-height:1.5;
+  overflow-x:auto;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="header">
+  <div class="badge">Model V10.2 Candidate 1 — explicit intermediate classifier · gated support dynamics · BCW dynamics · Phase 2 pre-registration live · simulation-supported candidate release</div>
+  <h1>A <em>dynamical</em> model<br>of realization</h1>
+  <p class="sub">
+    From prediction error to paradigm collapse — an interactive framework for understanding how ordinary insight scales into transformative experience.
+    <br><span style="color:var(--text3)">Click loop stages, topology nodes, state regions, or outcome cards to explore the system's interdependencies.</span>
+    <br><em style="color:var(--text3);font-style:normal;font-size:0.9rem">V10.2 Candidate 1 is a simulation-supported candidate release introducing explicit intermediate-state classification and gated support dynamics. It connects the Dynamical Model of Realization to SPRT outcome structure and VRP/BCW substrate geometry while keeping novel support gating and intermediate calibration visible.</em>
+  </p>
+</header>
+
+<!-- ── WHAT THIS MODEL IS / ISN'T ─────────────── -->
+<div class="sec">
+  <div class="sec-label">What this model is / isn't</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:1rem">
+    <div>
+      <h4 style="font-family:var(--font-d);font-size:1.1rem;color:var(--text);margin-bottom:8px">This model is:</h4>
+      <ul style="font-family:var(--font-ui);font-size:0.95rem;color:var(--text2);line-height:1.6;padding-left:1rem">
+        <li>A structural framework for insight dynamics</li>
+        <li>A unification attempt across cognitive science, information theory, and phenomenology</li>
+        <li>An interactive tool for exploring system interdependencies</li>
+        <li>A design space for understanding transformation</li>
+      </ul>
+    </div>
+    <div>
+      <h4 style="font-family:var(--font-d);font-size:1.1rem;color:var(--text);margin-bottom:8px">This model is not:</h4>
+      <ul style="font-family:var(--font-ui);font-size:0.95rem;color:var(--text2);line-height:1.6;padding-left:1rem">
+        <li>Fully metrically unified across domains</li>
+        <li>A claim of exact thresholds or universal endpoints</li>
+        <li>A complete theory of consciousness</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ── PHASE 1 · OPERATIONALIZATION ─────────────── -->
+<div class="sec">
+  <div class="sec-label">Phase 1 — operationalizing implicit constructs</div>
+  <div class="info-panel">
+    <strong>Goal:</strong> Turn the model's key variables into concrete, empirically measurable constructs before simulation or data collection begins.
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr;gap:14px;margin-top:1rem">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px">
+      <div style="font-family:var(--font-d);font-size:1rem;color:var(--text);margin-bottom:8px">D — Cognitive restructuring depth</div>
+      <div style="font-family:var(--font-m);font-size:0.95rem;color:var(--text2);line-height:1.6">
+        Measure by pre/post semantic network change. Use free association or concept-mapping tasks around a target problem, then compute real topology deltas (Q, C, L) from the resulting network. This maps the model's abstract restructuring depth onto established computational psycholinguistic methods.
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px">
+      <div style="font-family:var(--font-d);font-size:1rem;color:var(--text);margin-bottom:8px">Z — Self-boundary dissolution</div>
+      <div style="font-family:var(--font-m);font-size:0.95rem;color:var(--text2);line-height:1.6">
+        Use a state-level adaptation of validated instruments. Combine items from MEQ-30 and the Hartmann Boundary Questionnaire to cover the midrange from ordinary insight to peak states. The goal is a brief state measure that can capture transient boundary shifts during insight episodes.
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px">
+      <div style="font-family:var(--font-d);font-size:1rem;color:var(--text);margin-bottom:8px">D, S, A — behavioral operationalization</div>
+      <div style="font-family:var(--font-m);font-size:0.95rem;color:var(--text2);line-height:1.6">
+        <strong>D (dimensionality):</strong> measure through alternative uses or hypothesis generation tasks under uncertainty.
+        <br><strong>S (stability):</strong> measure via short-interval retest on ambiguous interpretation tasks.
+        <br><strong>A (anchoring/constraint):</strong> measure via counterexample tolerance and belief revision tasks.
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px">
+      <div style="font-family:var(--font-d);font-size:1rem;color:var(--text);margin-bottom:8px">R(t) — compute cost / resistance</div>
+      <div style="font-family:var(--font-m);font-size:0.95rem;color:var(--text2);line-height:1.6">
+        Operationalize with dual-task paradigms during insight-like tasks. Combine cognitive load measures, time pressure, and subjective effort ratings to index λ and β. This provides an empirical handle on the model's cost dynamics.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PHASE 2 · DYNAMIC EQUATIONS ─────────────── -->
+<div class="sec">
+  <div class="sec-label">Phase 2 — dynamic equations</div>
+  <div class="info-panel">
+    <strong>Goal:</strong> Turn the model's variables into a system of coupled dynamics suitable for simulation and empirical calibration.
+    <br><br><em style="color:var(--text3);font-style:normal">Companion simulation script v2 implements these equations. Phase 2 pre-registration (P1–P4) is active — see the pre-registration section below for current prediction status and falsification criteria.</em>
+  </div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:1rem">
+    <div style="font-family:var(--font-d);font-size:1rem;color:var(--text);margin-bottom:8px">Core state equations</div>
+    <div style="font-family:var(--font-m);font-size:0.95rem;color:var(--text2);line-height:1.6">
+      <strong>dD/dt:</strong> depth change from anomaly-driven restructuring balanced by resistance and integration fatigue.<br>
+      <code style="display:block;margin:8px 0;padding:10px;background:rgba(59,130,246,.06);border-radius:6px;color:#B8D7FF;">dD/dt = α₁·A_in·(1−D) + α₂·Z − α₃·R(t)</code>
+      <strong>dS/dt:</strong> stability update via support and constraint, weakened by stress and unintegrated change, with low-support erosion gated by a sharp support threshold.<br>
+      <code style="display:block;margin:8px 0;padding:10px;background:rgba(59,130,246,.06);border-radius:6px;color:#B8D7FF;">dS/dt = γ₁·σ(Support; k, x₀)·(1−S) − γ₂·Stress·(1−A)·S − 0.04·S·(1−σ(Support; k, x₀))</code>
+      <strong>dA/dt:</strong> anchoring increase from evidence and reality feedback, reduced by ambiguity and conflict.<br>
+      <code style="display:block;margin:8px 0;padding:10px;background:rgba(59,130,246,.06);border-radius:6px;color:#B8D7FF;">dA/dt = δ₁·Evidence·(1−A) − δ₂·Ambiguity·A</code>
+      <strong>dZ/dt:</strong> boundary dissolution driven by affect and synthesis, opposed by constraint and re-stabilization.<br>
+      <code style="display:block;margin:8px 0;padding:10px;background:rgba(59,130,246,.06);border-radius:6px;color:#B8D7FF;">dZ/dt = ε₁·Emotion·A − ε₂·Constraint·Z</code>
+      <strong>Resistance:</strong> a time-varying cost term combining working memory load, metabolic cost, and prediction stability.<br>
+      <code style="display:block;margin:8px 0;padding:10px;background:rgba(59,130,246,.06);border-radius:6px;color:#B8D7FF;">R(t) = θ_wm·WM(t) + λ·ΔE + β·ΔP</code>
+      <br>
+      Here <strong>A_in</strong> is anomaly intensity, <strong>Support</strong> is social/constraint feedback, and <strong>Evidence</strong> is the strength of disconfirming or confirming reality checks. The θ and Greek coefficients are heuristic parameters that can be calibrated empirically.
+      <br><br><strong style="color:var(--text)">Current simulation status (v2 candidate, n=2,000):</strong> 40.0% decline cluster, 50.0% recovery cluster, 10.0% intermediate. JS divergence from SPRT target: <strong style="color:var(--amber)">JSD = 0.0646</strong> — now below the good-fit threshold and consistent with the explicit intermediate classifier. Crisis cohort (n=2,000): <strong style="color:var(--red)">+5.0pp pathology</strong>, <strong style="color:var(--cyan)">−5.1pp recovery</strong>. Support threshold R²: <strong style="color:var(--indigo)">0.3195</strong> (passes P2 nonlinearity criterion).
+      <div style="margin-top:1rem;padding:12px;border:1px solid var(--border);border-radius:10px;background:rgba(22,33,58,.8);font-family:var(--font-m);font-size:11px;line-height:1.6;color:var(--text2)">
+        <strong style="color:var(--text)">V10.2 Candidate 1 parameters:</strong><br>
+        γ₁ = 0.54 · γ₂ = 1.00 · support_k = 16 · support_x0 = 0.48<br>
+        Intermediate classifier: D_peak ≥ 0.40 · D_final 0.25–0.75 · S 0.35–0.68 · A 0.25–0.48
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PHASE 2 · PRE-REGISTRATION (P1–P4) ──────────── -->
+<div class="sec">
+  <div class="sec-label">Phase 2 — pre-registration · falsifiable predictions (P1–P4)</div>
+  <div class="info-panel">
+    <strong>Pre-specified, in order.</strong> These predictions were locked before the Phase 2 simulation was finalized. Each has a defined falsification criterion. Current status reflects the companion simulation v2 results (May 2026).
+    <br><br><strong>Primary fit statistic:</strong> Jensen-Shannon divergence (JSD) between observed outcome distribution and SPRT-derived target. Pre-specified threshold: <strong>JSD &lt; 0.08 = good fit · JSD &gt; 0.15 = structural revision required</strong>. Current JSD = <strong style="color:var(--emerald)">0.0646</strong> — <em>good fit: below the good-fit threshold and structurally aligned with the target distribution.</em>
+    <br><br><strong>Intermediate calibration note:</strong> The SPRT target includes 6.9% intermediate. The improved v2 candidate produces a robust borderline class near the target bin, delivering ~10% intermediate while preserving bimodal decline/recovery structure.
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:1rem">
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--indigo);border-radius:8px;padding:14px">
+      <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--indigo);margin-bottom:5px">P1 · Stage sequence</div>
+      <div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--text)">D rise → Z rise → S stabilization</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:8px">In trajectories reaching Profound or higher outcomes, D rise must precede Z rise must precede S stabilization in &gt;60% of cases. Falsified if &lt;40%.<br><br><strong style="color:var(--emerald)">Current result:</strong> Full confirmation: 68.9%; reserve validation: 61.0%. Both remain above the 60% pass threshold and above the 40% falsification boundary.</div>
+      <div style="font-family:var(--font-m);font-size:8px;padding:4px 8px;border-radius:3px;background:rgba(16,185,129,.12);color:var(--emerald);display:inline-block">✓ PASSES · D→Z→S · 68.9% / reserve 61.0%</div>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--cyan);border-radius:8px;padding:14px">
+      <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);margin-bottom:5px">P2 · Support nonlinearity</div>
+      <div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--text)">Linear fit R² &lt; 0.70</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:8px">Recovery rate as a function of support (S) is nonlinear. A linear fit should yield R² &lt; 0.70. Falsified if R² &gt; 0.85. Current result: <strong>R² = 0.3195</strong> — passes current nonlinear criterion.</div>
+      <div style="font-family:var(--font-m);font-size:8px;padding:4px 8px;border-radius:3px;background:rgba(34,211,238,.12);color:var(--cyan);display:inline-block">✓ PASSES · R² = 0.3195</div>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--purple);border-radius:8px;padding:14px">
+      <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--purple);margin-bottom:5px">P3 · Bimodal outcome distribution</div>
+      <div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--text)">Poles &gt; intermediate bin</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:8px">Outcomes must cluster at the decline and recovery poles. The intermediate bin must be smaller than either polar cluster. Current: <strong>decline 40.0% · recovery 50.0% · intermediate 10.05%</strong>. Passes current bimodality criterion.</div>
+      <div style="font-family:var(--font-m);font-size:8px;padding:4px 8px;border-radius:3px;background:rgba(168,85,247,.12);color:var(--purple);display:inline-block">✓ PASSES · intermediate 10.05% < both poles</div>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:8px;padding:14px">
+      <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);margin-bottom:5px">P4 · Crisis cohort shift</div>
+      <div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--text)">≥5pp higher pathology · ≥5pp lower recovery</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:8px">Crisis-initialized participants: ≥5pp higher pathology and ≥5pp lower recovery vs controls. Current run (v2 candidate): <strong>+5.0pp pathology ✓</strong> · <strong>−5.1pp recovery ✓</strong> — both criteria met. Pathology delta is internally 4.999999999999999 and passes using EPS=1e−9 numerical tolerance.</div>
+      <div style="font-family:var(--font-m);font-size:8px;padding:4px 8px;border-radius:3px;background:rgba(16,185,129,.12);color:var(--emerald);display:inline-block">✓ PASSES · +5.0pp path · −5.1pp rec</div>
+    </div>
+
+  </div>
+
+  <div style="margin-top:1.2rem;background:var(--surface2);border-left:3px solid var(--blue);padding:10px;border-radius:4px;font-family:var(--font-m);font-size:9px;color:var(--text2);line-height:1.6">
+    <strong style="color:var(--blue)">Falsification schedule:</strong> P1 falsified if stage sequence holds in &lt;40% of Profound-or-higher trajectories. P2 falsified if R² &gt; 0.85. P3 falsified if intermediate bin is larger than either polar cluster. P4 falsified if crisis pathology is not ≥5pp higher AND recovery not ≥5pp lower. JSD &gt; 0.15 triggers structural model revision regardless of individual predictions.
+  </div>
+</div>
+
+<!-- ── BIOLOGICAL COMPUTE WINDOW + CANDIDATE VRP THIRD SUBSTRATE ── -->
+<div class="sec">
+  <div class="sec-label">Biological compute window — candidate VRP third substrate · living neural compute</div>
+  <div class="info-panel">
+    <strong>Candidate third substrate for the Viability-Routing Principle.</strong> The VRP was established across two substrates: human behavioral decision-making (610 participants, 8 pre-registered studies) and computational social-reasoning architecture (254 instances, 33 lock-disciplined experiments). Biological computing — specifically living human neurons integrated with silicon via multi-electrode arrays — constitutes a formally derivable third substrate candidate, satisfying all three Coverage-Routing-Gating (CRG) conditions through mechanisms that predate the VRP framework by decades.
+    <br><br><strong style="color:var(--amber)">V10.2 Candidate 1 status:</strong> Biological computing provides a formally derivable candidate third substrate for VRP. The decisive cross-substrate degradation-isomorphism test — whether biological neural cultures produce D/S/A-isomorphic degradation signatures with the human and computational substrates — remains pending.
+    <br><br><em style="color:var(--text3);font-style:normal">Platform: Cortical Labs CL1 — 800,000 lab-grown human neurons, grown from stem cells, on a silicon MEA. Draws as little as 30W at the neural chip; the full CL1 unit draws substantially more when life support and electronics are included. Trained to navigate Doom in a matter of days during initial Cortical Cloud testing (February 2026). DishBrain showed competitive or superior real-time learning against DQN, A2C, and PPO in Pong under time-matched conditions (Khajehnejad et al., 2025). Biological data centers now live in Melbourne (120 units) and Singapore pilot deployment, with planned expansion toward 1,000 units pending facility buildout and regulatory approval. These facts are subject to ongoing update — verify current CL1 deployment status from primary sources before citing.</em>
+  </div>
+
+  <!-- BCW equations -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:1rem">
+    <div style="font-family:var(--font-d);font-size:1rem;color:var(--text);margin-bottom:8px">The Biological Compute Window (BCW)</div>
+    <div style="font-family:var(--font-m);font-size:9.5px;color:var(--text2);line-height:1.7">
+      A living neural culture passes through a structured arc: high plasticity → stabilization → degradation. This is formalized as:
+      <code style="display:block;margin:8px 0;padding:10px;background:rgba(59,130,246,.06);border-radius:6px;color:#B8D7FF;">dL/dt = P(t) · I(t) − δ · L(t)      where  P(t) = P₀ · e^(−t/τₚ)</code>
+      L(t) = accumulated adaptive capacity · I(t) = information input rate · δ = homeostatic decay · τₚ = plasticity time constant (weeks–months for CL1 in-vitro cultures)<br><br>
+      <strong>Closed-form solution:</strong>
+      <code style="display:block;margin:8px 0;padding:10px;background:rgba(99,102,241,.06);border-radius:6px;color:#C4B8FF;">L(t) = (P₀·I₀·τₚ / (1 − δτₚ)) · (e^(−δt) − e^(−t/τₚ))</code>
+      <strong>Peak compute time (dL/dt = 0):</strong>
+      <code style="display:block;margin:8px 0;padding:10px;background:rgba(99,102,241,.06);border-radius:6px;color:#C4B8FF;">t* = τₚ · ln(P₀τₚ/δ) / (1/τₚ − δ)</code>
+      <strong>Biological Compute Window (total useful adaptive capacity):</strong>
+      <code style="display:block;margin:8px 0;padding:10px;background:rgba(168,85,247,.06);border-radius:6px;color:#DDB8FF;">BCW = ∫₀ᵀ L(t) dt</code>
+      Not FLOPS. Not tokens. Not uptime. <strong>The area under the learning curve — before the system returns to silence.</strong> For the CL1 (T ≈ 6 months), the peak learning window occurs in the first 1–2 weeks, consistent with reported Doom-navigation training over a matter of days.
+    </div>
+    <!-- BCW curve visualization -->
+    <svg width="100%" viewBox="0 0 640 160" xmlns="http://www.w3.org/2000/svg" style="margin-top:12px" aria-label="Biological Compute Window curve diagram">
+      <defs>
+        <linearGradient id="bcwFill" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#A855F7" stop-opacity=".35"/>
+          <stop offset="100%" stop-color="#A855F7" stop-opacity=".04"/>
+        </linearGradient>
+      </defs>
+      <!-- Axes -->
+      <line x1="50" y1="15" x2="50" y2="125" stroke="#1A2D4A" stroke-width="1.2"/>
+      <line x1="50" y1="125" x2="620" y2="125" stroke="#1A2D4A" stroke-width="1.2"/>
+      <!-- Axis labels -->
+      <text x="335" y="148" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#3D5478" letter-spacing=".08em">TIME (t)</text>
+      <text x="18" y="72" text-anchor="middle" transform="rotate(-90,18,72)" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#3D5478" letter-spacing=".06em">CAPACITY</text>
+      <!-- t* vertical dashed marker -->
+      <line x1="280" y1="15" x2="280" y2="125" stroke="#F59E0B" stroke-width=".9" stroke-dasharray="4 3" opacity=".6"/>
+      <text x="284" y="26" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#F59E0B" opacity=".8">t* (peak)</text>
+      <!-- T end marker -->
+      <line x1="590" y1="100" x2="590" y2="125" stroke="#3D5478" stroke-width=".8" stroke-dasharray="3 3" opacity=".5"/>
+      <text x="594" y="114" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478" opacity=".7">T</text>
+      <!-- P(t) = P0·e^(-t/τ) — monotone decay from top-left -->
+      <path d="M 50,25 C 120,28 180,45 250,68 C 320,91 420,112 590,122" fill="none" stroke="#3B82F6" stroke-width="1.6" opacity=".8"/>
+      <text x="130" y="38" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#3B82F6">P(t) = P₀·e^(−t/τₚ)</text>
+      <!-- L(t) — rises, peaks at t*, then decays — shaded BCW area -->
+      <path d="M 50,122 C 80,118 140,80 200,52 C 240,34 265,26 280,25 C 300,26 340,38 380,60 C 440,92 520,115 590,122 Z" fill="url(#bcwFill)"/>
+      <path d="M 50,122 C 80,118 140,80 200,52 C 240,34 265,26 280,25 C 300,26 340,38 380,60 C 440,92 520,115 590,122" fill="none" stroke="#A855F7" stroke-width="1.8" opacity=".9"/>
+      <text x="268" y="76" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#A855F7">L(t)</text>
+      <!-- BCW shading label -->
+      <text x="340" y="96" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#A855F7" opacity=".7">BCW = ∫L(t)dt</text>
+      <!-- Phase labels -->
+      <text x="110"  y="140" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478" letter-spacing=".04em">DRAFT</text>
+      <text x="210"  y="140" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478" letter-spacing=".04em">PROVISIONAL</text>
+      <text x="400"  y="140" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478" letter-spacing=".04em">COMMITTED</text>
+      <!-- Phase separators -->
+      <line x1="158" y1="125" x2="158" y2="132" stroke="#3D5478" stroke-width=".7"/>
+      <line x1="280" y1="125" x2="280" y2="132" stroke="#3D5478" stroke-width=".7"/>
+    </svg>
+    <p style="font-family:var(--font-m);font-size:8.5px;color:var(--text3);letter-spacing:.06em;margin-top:4px">Blue = plasticity decay P(t). Purple = accumulated adaptive capacity L(t). Shaded area = BCW. Peak at t* marks critical-period closure (COMMITTED gate fires). Post-peak: D collapses, S rigidifies, Ω_B → 0.</p>
+  </div>
+
+  <!-- D/S/A coordinates of BCW -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:1rem">
+    <div style="font-family:var(--font-d);font-size:1rem;color:var(--text);margin-bottom:10px">D/S/A coordinates of living neural compute</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px">
+      <div style="background:var(--surface2);border-radius:6px;padding:10px">
+        <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;color:var(--blue);text-transform:uppercase;margin-bottom:4px">D_B(t) — Dimensionality</div>
+        <code style="font-family:var(--font-m);font-size:8.5px;color:#B8D7FF;display:block;margin:4px 0">H(ρ_B(t)) = −Σ pₖ log pₖ</code>
+        <div style="font-size:10px;color:var(--text3);line-height:1.5">Shannon entropy of spike-routing across synaptic pathways. High D early (max accessible configurations), decreasing as learning commits the network to stable attractors.</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:6px;padding:10px">
+        <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;color:var(--indigo);text-transform:uppercase;margin-bottom:4px">S_B(t) — Stability</div>
+        <code style="font-family:var(--font-m);font-size:8.5px;color:#C4B8FF;display:block;margin:4px 0">1 − P(t)/P₀ = 1 − e^(−t/τₚ)</code>
+        <div style="font-size:10px;color:var(--text3);line-height:1.5">Complement of plasticity rate. S_B → 0 at birth (maximum revisability), S_B → 1 as the culture stabilizes into committed attractors. Biological analog of commitment accumulation.</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:6px;padding:10px">
+        <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;color:var(--purple);text-transform:uppercase;margin-bottom:4px">A_B(t) — Anchoring</div>
+        <code style="font-family:var(--font-m);font-size:8.5px;color:#DDB8FF;display:block;margin:4px 0">∫₀ᵗ P(τ)·I(τ) dτ = P₀I₀τₚ(1−e^(−t/τₚ))</code>
+        <div style="font-size:10px;color:var(--text3);line-height:1.5">Accumulated Hebbian learning: the sum of plasticity-weighted stimulation over the culture's experience. Commitment gate fires when A_B(t) &gt; θ_bio — marking critical-period closure.</div>
+      </div>
+    </div>
+    <div style="margin-top:10px;font-family:var(--font-m);font-size:9px;color:var(--text3);line-height:1.6">
+      <strong style="color:var(--text)">D/S/A arc of a living culture:</strong> t≈0: D high, S low, A low — maximum option breadth (DRAFT phase). 0 &lt; t &lt; t*: D decreases as attractors form, S rises, A accumulates (PROVISIONAL). t≈t*: gate fires (COMMITTED). t &gt; t*: D collapses, S→1 rigid, A plateaus — degradation begins, Ω_B(t)→0.
+    </div>
+  </div>
+
+  <!-- CRG instantiation -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:1rem">
+    <div style="font-family:var(--font-d);font-size:1rem;color:var(--text);margin-bottom:10px">Coverage-Routing-Gating instantiation in biological compute</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:10px">
+      <div style="background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:6px;padding:10px">
+        <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;color:var(--blue);text-transform:uppercase;margin-bottom:4px">Coverage</div>
+        <div style="font-size:10.5px;color:var(--text2);line-height:1.5">26 discrete synapse size categories (Salk Institute 2016/2024) encode 4.7 bits/synapse across qualitatively distinct plasticity regimes. 6 biological coverage channels: fast AMPA adaptation (ms–min), STP (s–min), LTP/LTD (min–hrs), structural consolidation (hrs–months), homeostatic scaling (hrs–days), critical-period gate (developmental; irreversible). Each channel handles a failure mode no other substitutes for.</div>
+      </div>
+      <div style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.2);border-radius:6px;padding:10px">
+        <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;color:var(--indigo);text-transform:uppercase;margin-bottom:4px">Routing</div>
+        <div style="font-size:10.5px;color:var(--text2);line-height:1.5">Hebbian plasticity is the biological routing policy (ρ_B): "neurons that fire together wire together" selects the synaptic pathway matched to the current stimulation regime. Under L2-regularized learning rules, the learning signal can align with Hebbian learning near convergence (Koplow et al., 2025). The routing mechanism was not designed — it evolved.</div>
+      </div>
+      <div style="background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.2);border-radius:6px;padding:10px">
+        <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;color:var(--purple);text-transform:uppercase;margin-bottom:4px">Gating</div>
+        <div style="font-size:10.5px;color:var(--text2);line-height:1.5">Critical periods are the biological commitment gate. DRAFT: silent synapses (AMPA-silent). PROVISIONAL: activity-driven AMPA insertion, LTP accumulating. COMMITTED: PV interneuron maturation, perineuronal net formation, NR2B→NR2A switch. Gate fires when A_B(t) &gt; θ_bio. Rollback requires chondroitinase treatment (high cost).</div>
+      </div>
+    </div>
+    <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);line-height:1.6;border-top:1px solid var(--border);padding-top:10px">
+      <strong style="color:var(--amber)">The two-level hierarchy — mortality as coverage maintenance:</strong> At the single-culture level (intra-BCW), CRG operates normally. At the system level (inter-BCW), individual cultures die and are replaced. Death is not a failure mode to engineer around. A committed post-critical-period culture has P(t)≈0 and cannot route to novel regime families. Replacement resets: C_B(0+) = C_max, P(0+) = P₀, A_B(0+) = 0 — full DRAFT state restored. The system maintains Ω_sys(t) &gt; Ω_min across an indefinite horizon precisely by allowing individual cultures to die. We have spent 75 years building computers that try not to die. The VRP may be telling us something about why that was always going to be insufficient.
+    </div>
+  </div>
+</div>
+
+<!-- ── SECTION 0 · FORMALIZED MECHANISMS ──────────── -->
+<div class="sec">
+  <div class="sec-label">Formalized mechanisms</div>
+  <div class="info-panel">
+    <strong>Why formalization matters:</strong> The model is not just poetic—it has actual structure. Below are the operational definitions of three frequently questioned mechanisms.
+    <br><br><strong>Measurement domains:</strong> The model operates across three loosely coupled layers—<em>Information</em> (compression, topology), <em>Cognitive</em> (WM, prediction error), <em>Phenomenological</em> (emotion, self-boundary). Mappings between layers are approximate and not metrically equivalent.
+  </div>
+
+  <h3 style="font-family:var(--font-d);font-size:1.15rem;color:var(--text);margin-top:1.5rem;margin-bottom:.8rem">① Compute Cost / Resistance</h3>
+  <div class="math-def">
+    <strong>Definition:</strong> R(t) = WM_saturation(t) + λ·ΔE_metabolic + β·ΔP_stability<br><br>
+    <strong>Components:</strong><br>
+    • <strong>WM_saturation:</strong> Working memory load. New model must fit within ~3–4 slots of active attention. Saturated WM → cost spike to 1.0; clean fit → near 0.<br>
+    • <strong>ΔE_metabolic:</strong> Free-energy change. Old model requires E₀ cal/min; new model costs E₁. If E₁ > E₀, resistance increases proportionally (λ ≈ 0.003 cal⁻¹).<br>
+    • <strong>ΔP_stability:</strong> Prediction stability penalty. Each model switch disrupts ongoing predictions. High-stakes contexts (driving, social interaction) → β ≈ 0.8; low-stakes → β ≈ 0.1.<br><br>
+    <strong>Operationally:</strong> If R(t) > θ_reject (typically ~0.6–0.7), the insight is classified as noise and discarded, no matter how valid it is. This is why you don't have a mystical experience every time you find your car keys.
+    <br><br><em style="color:var(--text3);font-style:normal">These thresholds are illustrative heuristic ranges derived from cognitive science literature. They are not empirically calibrated constants.</em>
+  </div>
+
+  <h3 style="font-family:var(--font-d);font-size:1.15rem;color:var(--text);margin-top:1.5rem;margin-bottom:.8rem">② Viability Filter</h3>
+  <div class="math-def">
+    <strong>Definition:</strong> A new model is viable if it maximizes (Compression, Accuracy, Actionability) subject to constraint resolution.<br><br>
+    <strong>Criteria:</strong><br>
+    • <strong>C (Compression):</strong> Kolmogorov complexity. New model must explain more with less code/structure. ΔC > θ_compress (typically ~0.1–0.2 bits/element) required.<br>
+    • <strong>A (Accuracy):</strong> Prediction error on held-out reality. Must reduce MAE by ≥ θ_accuracy (typically ~5–15%) on external validation data.<br>
+    • <strong>G (Actionability):</strong> Does it guide novel behavior that produces real-world rewards? Binary: yes or no.<br><br>
+    <strong>Conflict resolution (when C↑ but A↓):</strong><br>
+    Primary rule: <strong>Accuracy is the constraint</strong>. If the new model improves compression but worsens predictions, revert to the reject path (stage 07).<br>
+    Tiebreaker rule: When A is identical, Actionability breaks ties. A model that compresses elegantly but produces no new behavior reverts to reject.<br><br>
+    <strong>Result:</strong> Genuine insight ≠ intellectually satisfying delusion. This is what separates paradigm collapse from pathology.
+    <br><br><em style="color:var(--text3);font-style:normal">These criteria thresholds (ΔC > 0.15, MAE ≥10%) are heuristic ranges based on information theory and cognitive modeling. They are illustrative, not empirically derived constants.</em>
+  </div>
+
+  <h3 style="font-family:var(--font-d);font-size:1.15rem;color:var(--text);margin-top:1.5rem;margin-bottom:.8rem">③ Field-like Topology (Mathematical Definition)</h3>
+  <div class="math-def">
+    <strong>Definition:</strong> Field-like structure is characterized by the loss of modularity (Q) and emergence of global synchrony.<br><br>
+    <strong>Metrics:</strong><br>
+    • <strong>Q (Modularity score):</strong> Measure of distinct clustering. Q ∈ [0,1]. Sparse/Clustered: Q ≈ 0.4–0.6. Integrated: Q ≈ 0.1–0.3. <strong>Field-like: Q ≈ 0 (loss of clusters).</strong><br>
+    • <strong>Global Sync (C_clustering coefficient):</strong> Probability that neighbors of a node are also neighbors. Low C → linear chains. High C → dense local clusters. Field-like has <strong>high C at all scales</strong> (near 1.0).<br>
+    • <strong>L (Mean path length):</strong> Average steps between nodes. Sparse nets: L ≈ log(N). <strong>Field-like: L → 1 (every node reachable in one hop).</strong><br><br>
+    <strong>Phase transition markers:</strong> When Q < θ_modularity (typically ~0.1–0.2) AND C > θ_coherence (typically ~0.8–0.9) simultaneously, the network may undergo topological phase transition. Subjective experience: "self and world boundaries collapse" — geometrically, they do.
+    <br><br><em style="color:var(--text3);font-style:normal">These metrics are heuristic ranges illustrating one plausible structural regime that may correspond to reported features of mystical experiences. They are not definitive measurements.</em>
+  </div>
+</div>
+
+<!-- ── SECTION 0B · BIFURCATION CONDITIONS ────────── -->
+<div class="sec">
+  <div class="sec-label">Bifurcation conditions — what triggers threshold crossings</div>
+  <div class="info-panel">
+    <strong>The Gap:</strong> The model identifies six outcome levels, but until now, the thresholds for moving between them have been implicit. Below are the explicit bifurcation rules — what actually tips an Aha into a Profound insight.
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:1rem">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-d);font-size:1rem;color:var(--text);margin-bottom:8px">Everyday → Aha</div>
+      <div style="font-family:var(--font-m);font-size:9.5px;color:var(--text2);line-height:1.6">
+        <strong>Condition:</strong> Cognition depth crosses θ_aha (typically ~25–35%)<br>
+        <strong>What changes:</strong> Salience reweighting exceeds single domain. 2+ domains begin cross-linking.<br>
+        <strong>Signature:</strong> First moment of "oh, I didn't see it that way before."
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-d);font-size:1rem;color:var(--text);margin-bottom:8px">Aha → Profound</div>
+      <div style="font-family:var(--font-m);font-size:9.5px;color:var(--text2);line-height:1.6">
+        <strong>Condition:</strong> Cognition depth > θ_profound (typically ~40–50%) AND compression gain ΔC > θ_compress (typically ~0.1–0.2 bits/element)<br>
+        <strong>What changes:</strong> Topology shifts integrated. Old and new domains merge into single coherent model.<br>
+        <strong>Signature:</strong> "Everything reorganized. I understand differently now."
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-d);font-size:1rem;color:var(--text);margin-bottom:8px">Profound → Paradigm</div>
+      <div style="font-family:var(--font-m);font-size:9.5px;color:var(--text2);line-height:1.6">
+        <strong>Condition:</strong> Cognition depth > θ_paradigm (typically ~70–80%) AND emotion > θ_emotion (typically ~50–60%)<br>
+        <strong>What changes:</strong> Not just assumptions shift — the frame itself becomes visible. Meta-level change.<br>
+        <strong>Signature:</strong> "The game itself was the illusion. I am not a player — I am part of the code."
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-d);font-size:1rem;color:var(--text);margin-bottom:8px">Paradigm → Mystical</div>
+      <div style="font-family:var(--font-m);font-size:9.5px;color:var(--text2);line-height:1.6">
+        <strong>Condition:</strong> Paradigm collapse + self-boundary dissolution Z > θ_boundary (typically ~55–65%)<br>
+        <strong>What changes:</strong> Subject-object distinction collapses. Topological phase transition: Q < θ_modularity, C > θ_coherence, L → θ_path (typically ~1).<br>
+        <strong>Signature:</strong> "There is no separation. Knower and known are one." (Noetic + ineffable quality.)
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:1.2rem;background:var(--surface2);border-left:3px solid var(--red);padding:10px;border-radius:4px">
+    <strong style="color:var(--red)">⚠ Pathology branch (not threshold but failure):</strong> If Paradigm collapse is reached BUT constraint (reality feedback) < θ_constraint (typically ~30–40%), the system skips re-coherence and fragments. Destabilization becomes permanent. Loop cannot reset.
+  </div>
+</div>
+
+<!-- ── SECTION 0C · TEMPORAL DYNAMICS ───────────── -->
+<div class="sec">
+  <div class="sec-label">Temporal dynamics — how long does realization take?</div>
+  <div class="info-panel">
+    <strong>The missing dimension:</strong> The model is a snapshot, but realizations unfold across radically different timescales. An Aha might be instantaneous; a paradigm collapse might take months. This matters for the embodied integration pipeline.
+  </div>
+
+  <svg width="100%" viewBox="0 0 680 180" xmlns="http://www.w3.org/2000/svg" aria-label="Timescale chart for each outcome and loop iteration">
+    <defs>
+      <linearGradient id="tg1" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#3B82F6" stop-opacity=".3"/>
+        <stop offset="100%" stop-color="#3B82F6" stop-opacity=".05"/>
+      </linearGradient>
+      <linearGradient id="tg2" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#6366F1" stop-opacity=".3"/>
+        <stop offset="100%" stop-color="#6366F1" stop-opacity=".05"/>
+      </linearGradient>
+      <linearGradient id="tg3" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#A855F7" stop-opacity=".3"/>
+        <stop offset="100%" stop-color="#A855F7" stop-opacity=".05"/>
+      </linearGradient>
+      <linearGradient id="tg4" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#7C3AED" stop-opacity=".3"/>
+        <stop offset="100%" stop-color="#7C3AED" stop-opacity=".05"/>
+      </linearGradient>
+    </defs>
+    <!-- Axes -->
+    <line x1="50" y1="20" x2="50" y2="160" stroke="#1A2D4A" stroke-width="1.2"/>
+    <line x1="50" y1="160" x2="680" y2="160" stroke="#1A2D4A" stroke-width="1.2"/>
+    <!-- Log scale markers on x-axis: 1 sec, 1 min, 1 hr, 1 day, 1 week, 1 month, 1 year -->
+    <line x1="80" y1="155" x2="80" y2="165" stroke="#3D5478" stroke-width=".8"/>
+    <line x1="140" y1="155" x2="140" y2="165" stroke="#3D5478" stroke-width=".8"/>
+    <line x1="200" y1="155" x2="200" y2="165" stroke="#3D5478" stroke-width=".8"/>
+    <line x1="260" y1="155" x2="260" y2="165" stroke="#3D5478" stroke-width=".8"/>
+    <line x1="320" y1="155" x2="320" y2="165" stroke="#3D5478" stroke-width=".8"/>
+    <line x1="380" y1="155" x2="380" y2="165" stroke="#3D5478" stroke-width=".8"/>
+    <line x1="440" y1="155" x2="440" y2="165" stroke="#3D5478" stroke-width=".8"/>
+    <line x1="500" y1="155" x2="500" y2="165" stroke="#3D5478" stroke-width=".8"/>
+    <line x1="560" y1="155" x2="560" y2="165" stroke="#3D5478" stroke-width=".8"/>
+    <line x1="620" y1="155" x2="620" y2="165" stroke="#3D5478" stroke-width=".8"/>
+    <!-- Labels -->
+    <text x="80"  y="175" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">1s</text>
+    <text x="140" y="175" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">1m</text>
+    <text x="200" y="175" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">1h</text>
+    <text x="260" y="175" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">1d</text>
+    <text x="320" y="175" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">1w</text>
+    <text x="380" y="175" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">1mo</text>
+    <text x="440" y="175" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">6mo</text>
+    <text x="500" y="175" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">1y</text>
+    <text x="560" y="175" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">3y</text>
+    <text x="620" y="175" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">7y</text>
+
+    <!-- Ranges (duration bars) -->
+    <!-- Everyday insight: 1 min to 1 day -->
+    <rect x="140" y="50" width="120" height="16" fill="url(#tg1)" rx="2"/>
+    <text x="150" y="62" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#3B82F6" letter-spacing=".05em">Everyday insight</text>
+
+    <!-- Aha moment: 10 min to 1 week -->
+    <rect x="160" y="75" width="160" height="16" fill="url(#tg2)" rx="2"/>
+    <text x="170" y="87" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#6366F1" letter-spacing=".05em">Aha! moment</text>
+
+    <!-- Profound insight: 1 day to 3 months -->
+    <rect x="260" y="100" width="100" height="16" fill="url(#tg3)" rx="2"/>
+    <text x="270" y="112" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#A855F7" letter-spacing=".05em">Profound insight</text>
+
+    <!-- Paradigm collapse: 1 week to 2 years (Integration alone) -->
+    <rect x="320" y="125" width="180" height="16" fill="url(#tg4)" rx="2"/>
+    <text x="330" y="137" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#7C3AED" letter-spacing=".05em">Paradigm collapse (integration phase)</text>
+  </svg>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:1rem">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-d);font-size:1rem;color:var(--text);margin-bottom:6px">Single Loop Iteration</div>
+      <div style="font-family:var(--font-m);font-size:9.5px;color:var(--text2);line-height:1.5">
+        Trigger → Peak Integration: <strong>60–120 seconds</strong> (instantaneous to a few minutes)<br><br>
+        Stages 01–06 happen rapidly. Peak is the climax. The system doesn't "take time" to notice.
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-d);font-size:1rem;color:var(--text);margin-bottom:6px">Stage 07–08: Embodied Integration</div>
+      <div style="font-family:var(--font-m);font-size:9.5px;color:var(--text2);line-height:1.5">
+        Re-coherence: <strong>minutes to hours</strong><br>
+        Embodied integration: <strong>days to years</strong><br><br>
+        This pipeline cannot be rushed. Each checkpoint (stabilization, generalization, behavioral, validation) is sequential.
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-d);font-size:1rem;color:var(--text);margin-bottom:6px">Loop Recursion Cadence</div>
+      <div style="font-family:var(--font-m);font-size:9.5px;color:var(--text2);line-height:1.5">
+        After embodied integration completes, the loop recurses at upgraded resolution.<br><br>
+        <strong>Cadence depends on anomaly rate:</strong> If prediction errors are frequent, loop runs continuously. If stable for months, loop dormant.
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-d);font-size:1rem;color:var(--text);margin-bottom:6px">Critical Insight for Mystical States</div>
+      <div style="font-family:var(--font-m);font-size:9.5px;color:var(--text2);line-height:1.5">
+        Mystical experiences can appear within seconds of trigger (fast loop via high salience anomalies), but <em>embodied integration takes months or years</em>.<br><br>
+        The peak is brief. The integration is the work.
+      </div>
+    </div>
+  </div>
+</div>
+<div class="sec">
+  <div class="sec-label">Network topology evolution — click nodes to highlight in state space</div>
+  <svg width="100%" viewBox="0 0 720 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Four network graphs showing topology evolution from sparse to field-like">
+    <style>.ts{font-family:'IBM Plex Mono',monospace;font-size:9px}</style>
+    <defs>
+      <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+        <path d="M1 1.5L9 5L1 8.5" fill="none" stroke="#3D5478" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </marker>
+      <radialGradient id="fieldGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%"   stop-color="#A855F7" stop-opacity=".35"/>
+        <stop offset="55%"  stop-color="#6366F1" stop-opacity=".1"/>
+        <stop offset="100%" stop-color="#3B82F6" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+
+    <!-- ① SPARSE — Q≈0.5, L≈2.1, C≈0.3 -->
+    <g class="topo-click" data-topo="sparse">
+      <circle cx="65"  cy="38" r="3.5" fill="#3B82F6" opacity=".75"/>
+      <circle cx="105" cy="30" r="3.5" fill="#3B82F6" opacity=".75"/>
+      <circle cx="145" cy="46" r="3.5" fill="#3B82F6" opacity=".75"/>
+      <circle cx="52"  cy="66" r="3.5" fill="#3B82F6" opacity=".75"/>
+      <circle cx="118" cy="74" r="3.5" fill="#3B82F6" opacity=".75"/>
+      <circle cx="153" cy="79" r="3.5" fill="#3B82F6" opacity=".75"/>
+      <line x1="65"  y1="38" x2="105" y2="30"  stroke="#3B82F6" stroke-width=".5" opacity=".4"/>
+      <line x1="105" y1="30" x2="145" y2="46"  stroke="#3B82F6" stroke-width=".5" opacity=".4"/>
+      <line x1="52"  y1="66" x2="65"  y2="38"  stroke="#3B82F6" stroke-width=".5" opacity=".4"/>
+      <line x1="118" y1="74" x2="153" y2="79"  stroke="#3B82F6" stroke-width=".5" opacity=".4"/>
+      <text class="ts" x="103" y="104" text-anchor="middle" fill="#3D5478">Sparse</text>
+      <text class="ts" x="103" y="118" text-anchor="middle" fill="#3D5478">Everyday insight</text>
+      <text class="ts" x="103" y="132" text-anchor="middle" fill="#3D5478" opacity=".5" font-size="8">Q=0.48 L=2.1</text>
+    </g>
+
+    <!-- divider → -->
+    <line x1="172" y1="57" x2="190" y2="57" stroke="#3D5478" stroke-width=".9" marker-end="url(#arw)"/>
+
+    <!-- ② CLUSTERED — Q≈0.35, L≈1.8, C≈0.5 -->
+    <g class="topo-click" data-topo="clustered">
+      <circle cx="218" cy="42" r="3.5" fill="#3B82F6" opacity=".85"/>
+      <circle cx="234" cy="58" r="3.5" fill="#3B82F6" opacity=".85"/>
+      <circle cx="218" cy="72" r="3.5" fill="#3B82F6" opacity=".85"/>
+      <circle cx="245" cy="46" r="3.5" fill="#3B82F6" opacity=".85"/>
+      <circle cx="291" cy="36" r="3.5" fill="#6366F1" opacity=".9"/>
+      <circle cx="309" cy="54" r="3.5" fill="#6366F1" opacity=".9"/>
+      <circle cx="293" cy="70" r="3.5" fill="#6366F1" opacity=".9"/>
+      <line x1="218" y1="42" x2="234" y2="58" stroke="#3B82F6" stroke-width=".7" opacity=".6"/>
+      <line x1="234" y1="58" x2="218" y2="72" stroke="#3B82F6" stroke-width=".7" opacity=".6"/>
+      <line x1="218" y1="42" x2="245" y2="46" stroke="#3B82F6" stroke-width=".7" opacity=".6"/>
+      <line x1="245" y1="46" x2="234" y2="58" stroke="#3B82F6" stroke-width=".7" opacity=".5"/>
+      <line x1="291" y1="36" x2="309" y2="54" stroke="#6366F1" stroke-width=".7" opacity=".7"/>
+      <line x1="309" y1="54" x2="293" y2="70" stroke="#6366F1" stroke-width=".7" opacity=".7"/>
+      <line x1="291" y1="36" x2="293" y2="70" stroke="#6366F1" stroke-width=".7" opacity=".5"/>
+      <line x1="245" y1="46" x2="291" y2="36" stroke="#7C3AED" stroke-width=".7" stroke-dasharray="3 2" opacity=".55"/>
+      <text class="ts" x="263" y="104" text-anchor="middle" fill="#3D5478">Clustered</text>
+      <text class="ts" x="263" y="118" text-anchor="middle" fill="#3D5478">Aha! moment</text>
+      <text class="ts" x="263" y="132" text-anchor="middle" fill="#3D5478" opacity=".5" font-size="8">Q=0.35 L=1.8</text>
+    </g>
+
+    <!-- divider → -->
+    <line x1="334" y1="57" x2="352" y2="57" stroke="#3D5478" stroke-width=".9" marker-end="url(#arw)"/>
+
+    <!-- ③ INTEGRATED — Q≈0.12, L≈1.3, C≈0.7 -->
+    <g class="topo-click" data-topo="integrated">
+      <circle cx="390" cy="35" r="3.5" fill="#7C3AED"/>
+      <circle cx="422" cy="28" r="3.5" fill="#7C3AED"/>
+      <circle cx="458" cy="40" r="3.5" fill="#7C3AED"/>
+      <circle cx="472" cy="62" r="3.5" fill="#7C3AED"/>
+      <circle cx="456" cy="82" r="3.5" fill="#7C3AED"/>
+      <circle cx="423" cy="89" r="3.5" fill="#7C3AED"/>
+      <circle cx="390" cy="81" r="3.5" fill="#7C3AED"/>
+      <circle cx="367" cy="62" r="3.5" fill="#7C3AED"/>
+      <circle cx="375" cy="44" r="3.5" fill="#7C3AED"/>
+      <circle cx="419" cy="58" r="3.5" fill="#7C3AED" opacity=".8"/>
+      <line x1="390" y1="35" x2="422" y2="28" stroke="#7C3AED" stroke-width=".55" opacity=".5"/>
+      <line x1="422" y1="28" x2="458" y2="40" stroke="#7C3AED" stroke-width=".55" opacity=".5"/>
+      <line x1="458" y1="40" x2="472" y2="62" stroke="#7C3AED" stroke-width=".55" opacity=".5"/>
+      <line x1="472" y1="62" x2="456" y2="82" stroke="#7C3AED" stroke-width=".55" opacity=".5"/>
+      <line x1="456" y1="82" x2="423" y2="89" stroke="#7C3AED" stroke-width=".55" opacity=".5"/>
+      <line x1="423" y1="89" x2="390" y2="81" stroke="#7C3AED" stroke-width=".55" opacity=".5"/>
+      <line x1="390" y1="81" x2="367" y2="62" stroke="#7C3AED" stroke-width=".55" opacity=".5"/>
+      <line x1="367" y1="62" x2="375" y2="44" stroke="#7C3AED" stroke-width=".55" opacity=".5"/>
+      <line x1="375" y1="44" x2="390" y2="35" stroke="#7C3AED" stroke-width=".55" opacity=".5"/>
+      <line x1="390" y1="35" x2="419" y2="58" stroke="#7C3AED" stroke-width=".4" opacity=".3"/>
+      <line x1="422" y1="28" x2="419" y2="58" stroke="#7C3AED" stroke-width=".4" opacity=".3"/>
+      <line x1="458" y1="40" x2="419" y2="58" stroke="#7C3AED" stroke-width=".4" opacity=".3"/>
+      <line x1="472" y1="62" x2="419" y2="58" stroke="#7C3AED" stroke-width=".4" opacity=".3"/>
+      <line x1="456" y1="82" x2="419" y2="58" stroke="#7C3AED" stroke-width=".4" opacity=".3"/>
+      <line x1="367" y1="62" x2="419" y2="58" stroke="#7C3AED" stroke-width=".4" opacity=".3"/>
+      <line x1="390" y1="35" x2="456" y2="82" stroke="#7C3AED" stroke-width=".3" opacity=".18"/>
+      <line x1="458" y1="40" x2="390" y2="81" stroke="#7C3AED" stroke-width=".3" opacity=".18"/>
+      <text class="ts" x="419" y="104" text-anchor="middle" fill="#3D5478">Integrated</text>
+      <text class="ts" x="419" y="118" text-anchor="middle" fill="#3D5478">Profound insight</text>
+      <text class="ts" x="419" y="132" text-anchor="middle" fill="#3D5478" opacity=".5" font-size="8">Q=0.12 L=1.3</text>
+    </g>
+
+    <!-- divider → -->
+    <line x1="499" y1="57" x2="517" y2="57" stroke="#3D5478" stroke-width=".9" marker-end="url(#arw)"/>
+
+    <!-- ④ FIELD-LIKE — Q≈0.02, L≈1.0, C≈0.95 -->
+    <g class="topo-click" data-topo="fieldlike">
+      <ellipse cx="596" cy="58" rx="54" ry="47" fill="url(#fieldGlow)"/>
+      <circle cx="596" cy="58" r="5.5" fill="#A855F7" opacity=".9"/>
+      <circle cx="596" cy="22" r="3"   fill="#A855F7" opacity=".6"/>
+      <circle cx="628" cy="32" r="3"   fill="#A855F7" opacity=".55"/>
+      <circle cx="641" cy="58" r="3"   fill="#A855F7" opacity=".6"/>
+      <circle cx="628" cy="84" r="3"   fill="#A855F7" opacity=".55"/>
+      <circle cx="596" cy="94" r="3"   fill="#A855F7" opacity=".6"/>
+      <circle cx="564" cy="84" r="3"   fill="#A855F7" opacity=".55"/>
+      <circle cx="551" cy="58" r="3"   fill="#A855F7" opacity=".6"/>
+      <circle cx="564" cy="32" r="3"   fill="#A855F7" opacity=".55"/>
+      <line x1="596" y1="58" x2="596" y2="25" stroke="#A855F7" stroke-width=".6" opacity=".5"/>
+      <line x1="596" y1="58" x2="628" y2="35" stroke="#A855F7" stroke-width=".6" opacity=".45"/>
+      <line x1="596" y1="58" x2="641" y2="58" stroke="#A855F7" stroke-width=".6" opacity=".5"/>
+      <line x1="596" y1="58" x2="628" y2="81" stroke="#A855F7" stroke-width=".6" opacity=".45"/>
+      <line x1="596" y1="58" x2="596" y2="91" stroke="#A855F7" stroke-width=".6" opacity=".5"/>
+      <line x1="596" y1="58" x2="564" y2="81" stroke="#A855F7" stroke-width=".6" opacity=".45"/>
+      <line x1="596" y1="58" x2="551" y2="58" stroke="#A855F7" stroke-width=".6" opacity=".5"/>
+      <line x1="596" y1="58" x2="564" y2="35" stroke="#A855F7" stroke-width=".6" opacity=".45"/>
+      <line x1="596" y1="22" x2="628" y2="32" stroke="#A855F7" stroke-width=".4" opacity=".3"/>
+      <line x1="628" y1="32" x2="641" y2="58" stroke="#A855F7" stroke-width=".4" opacity=".3"/>
+      <line x1="641" y1="58" x2="628" y2="84" stroke="#A855F7" stroke-width=".4" opacity=".3"/>
+      <line x1="628" y1="84" x2="596" y2="94" stroke="#A855F7" stroke-width=".4" opacity=".3"/>
+      <line x1="596" y1="94" x2="564" y2="84" stroke="#A855F7" stroke-width=".4" opacity=".3"/>
+      <line x1="564" y1="84" x2="551" y2="58" stroke="#A855F7" stroke-width=".4" opacity=".3"/>
+      <line x1="551" y1="58" x2="564" y2="32" stroke="#A855F7" stroke-width=".4" opacity=".3"/>
+      <line x1="564" y1="32" x2="596" y2="22" stroke="#A855F7" stroke-width=".4" opacity=".3"/>
+      <text class="ts" x="596" y="104" text-anchor="middle" fill="#3D5478">Field-like</text>
+      <text class="ts" x="596" y="116" text-anchor="middle" fill="#3D5478">Mystical state</text>
+      <text class="ts" x="596" y="129" text-anchor="middle" fill="#3D5478" opacity=".5">Q≈0 · C≈0.95 · L=1</text>
+    </g>
+  </svg>
+  <p style="font-family:var(--font-m);font-size:9px;color:var(--text3);letter-spacing:.06em;margin-top:8px"><strong>Topology transitions:</strong> Q = modularity (0=no clusters), C = clustering coefficient (1=all neighbors connected), L = mean path length (1=one hop). <strong>Phase boundary:</strong> When Q drops below 0.15 AND C exceeds 0.85, structural collapse of self-world boundary occurs.</p>
+</div>
+
+<!-- ── SECTION: FOUR CONTROL QUESTIONS ───────────── -->
+<div class="sec">
+  <div class="sec-label">Four universal control questions — from the Law of Generative Control</div>
+  <div class="info-panel" style="margin-bottom:1rem">
+    Any viable adaptive system must continuously answer four questions. Failure on any one produces a predictable breakdown. Each maps directly onto stages of the realization loop.
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:8px;padding:14px">
+      <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin-bottom:5px">Q1 · Stages 02–03</div>
+      <div style="font-size:12px;font-weight:700;margin-bottom:5px">Explore without dissolving</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.6">Can the system explore alternative hypotheses without fragmenting into noise? <br><em>Failure → Dissolution: low S, low A, high D variance. System loses coherence.</em></div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:8px;padding:14px">
+      <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:5px">Q2 · Stage 05</div>
+      <div style="font-size:12px;font-weight:700;margin-bottom:5px">Commit without freezing</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.6">Can it commit to a restructured model while preserving reversibility where uncertainty remains? <br><em>Failure → Premature commitment: high S, low D. Rigidity, brittleness.</em></div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--indigo);border-radius:8px;padding:14px">
+      <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--indigo);margin-bottom:5px">Q3 · Stage 04</div>
+      <div style="font-size:12px;font-weight:700;margin-bottom:5px">Sense degradation</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.6">Can it detect control loss — the entropy spike of model destabilization — before collapse thresholds are crossed? <br><em>Failure → Surprise failure: steep ∂V/∂t, threshold crossed without warning.</em></div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--cyan);border-radius:8px;padding:14px">
+      <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan);margin-bottom:5px">Q4 · Stages 07–08</div>
+      <div style="font-size:12px;font-weight:700;margin-bottom:5px">Recover from error</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.6">Can it recover — re-cohere and re-integrate — before option-space collapses irreversibly into pathology? <br><em>Failure → Irreversible collapse: option-space exhaustion, persistent fragmentation.</em></div>
+    </div>
+  </div>
+  <p style="font-family:var(--font-m);font-size:8.5px;color:var(--text3);letter-spacing:.06em;margin-top:10px">No fifth independent requirement exists. These four are necessary and jointly sufficient for viable adaptive behavior — across biological organisms, AI architectures, and human cognition alike. (Long, 2026 — Law of Generative Control Under Uncertainty)</p>
+</div>
+
+<!-- ── SECTION 2 · CORE LOOP WITH ANIMATION ────── -->
+<div class="sec">
+  <div class="sec-label">Core recursive loop — watch the token move · click any stage to explore</div>
+  <div class="info-panel">
+    <strong>Canonical trajectory:</strong> This is an idealized attractor path. Real cognition is messier—with stalls, overlaps, skipped steps, and feedback loops. Deviations are expected and meaningful.
+  </div>
+  <div class="loop-wrap">
+    <svg class="loop-svg" viewBox="0 0 680 468" xmlns="http://www.w3.org/2000/svg" id="loopSvg">
+      <defs>
+        <marker id="aw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
+          <path d="M1 1.5L9 5L1 8.5" fill="none" stroke="#243D60" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+        <filter id="tokenGlow">
+          <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+
+      <!-- Centre hint -->
+      <ellipse cx="340" cy="230" rx="134" ry="92" fill="none" stroke="#12253D" stroke-width="1.2" stroke-dasharray="5 4"/>
+      <text x="340" y="225" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#1E3A5A" letter-spacing=".13em">RECURSIVE LOOP</text>
+      <text x="340" y="240" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#1E3A5A" letter-spacing=".13em">+ FEEDBACK</text>
+
+      <!-- ── Flow arrows (main clockwise ring) ───────── -->
+      <path d="M 368 82 Q 446 86 487 112" fill="none" stroke="#1E3552" stroke-width="1.3" marker-end="url(#aw)"/>
+      <path d="M 534 150 Q 567 186 568 222" fill="none" stroke="#1E3552" stroke-width="1.3" marker-end="url(#aw)"/>
+      <path d="M 568 254 Q 562 295 528 322" fill="none" stroke="#1E3552" stroke-width="1.3" marker-end="url(#aw)"/>
+      <path d="M 498 345 Q 440 370 368 376" fill="none" stroke="#1E3552" stroke-width="1.3" marker-end="url(#aw)"/>
+      <path d="M 312 376 Q 248 370 196 342" fill="none" stroke="#1E3552" stroke-width="1.3" marker-end="url(#aw)"/>
+      <path d="M 153 316 Q 116 282 112 252" fill="none" stroke="#1E3552" stroke-width="1.3" marker-end="url(#aw)"/>
+      <path d="M 112 208 Q 118 162 155 138" fill="none" stroke="#1E3552" stroke-width="1.3" marker-end="url(#aw)"/>
+      <path d="M 196 116 Q 252 84 312 80" fill="none" stroke="#243D60" stroke-width="1.5" stroke-dasharray="1 0" marker-end="url(#aw)"/>
+
+      <!-- ── Feedback arcs ─────────── -->
+      <path class="feedback-arc" d="M 528 132 Q 575 155 572 220" fill="none" stroke="#3B82F6" stroke-width=".9" stroke-dasharray="3 3" opacity=".35" data-feedback="02-to-03"/>
+      <path class="feedback-arc" d="M 340 82 Q 196 55 170 126" fill="none" stroke="#6366F1" stroke-width=".9" stroke-dasharray="3 3" opacity=".32" data-feedback="03-to-02"/>
+      <path class="feedback-arc" d="M 340 348 Q 340 440 220 440 Q 120 440 120 360 Q 120 340 118 330" fill="none" stroke="#F59E0B" stroke-width=".8" stroke-dasharray="3 3" opacity=".28" data-feedback="reject"/>
+      <text x="230" y="451" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#F59E0B" opacity=".5" letter-spacing=".08em">VIABILITY FILTER — REJECT PATH</text>
+
+      <!-- ANIMATED TOKEN - moves through stages -->
+      <g id="loopToken" filter="url(#tokenGlow)">
+        <circle cx="340" cy="80" r="8" fill="#00D9FF" opacity=".95"/>
+        <circle cx="340" cy="80" r="5" fill="none" stroke="#00D9FF" stroke-width="1" opacity=".6"/>
+        <circle cx="340" cy="80" r="12" fill="none" stroke="#00D9FF" stroke-width=".5" opacity=".3"/>
+      </g>
+
+      <!-- ── STAGE NODES ──────────────────────── -->
+      <g class="loop-stage" data-i="0" id="s0">
+        <circle class="s-ring" cx="340" cy="80" r="31" fill="#0D1626" stroke="#3B82F6" stroke-width="1.6"/>
+        <circle cx="340" cy="80" r="14" fill="#3B82F6" opacity=".1"/>
+        <polyline points="333,73 337,80 333,87 340,87 344,80 340,73 347,73" fill="none" stroke="#3B82F6" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+        <text x="340" y="122" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB" letter-spacing=".06em">PREDICTION</text>
+        <text x="340" y="133" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB" letter-spacing=".06em">ERROR</text>
+        <text x="340" y="35" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">01</text>
+      </g>
+
+      <g class="loop-stage" data-i="1" id="s1">
+        <circle class="s-ring" cx="514" cy="131" r="31" fill="#0D1626" stroke="#4F8EF7" stroke-width="1.6"/>
+        <circle cx="514" cy="131" r="14" fill="#4F8EF7" opacity=".1"/>
+        <circle cx="514" cy="131" r="10" fill="none" stroke="#4F8EF7" stroke-width="1.2" opacity=".7"/>
+        <circle cx="514" cy="131" r="5"  fill="none" stroke="#4F8EF7" stroke-width="1.2" opacity=".9"/>
+        <circle cx="514" cy="131" r="1.5" fill="#4F8EF7"/>
+        <text x="514" y="173" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB" letter-spacing=".06em">SALIENCE</text>
+        <text x="514" y="184" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB" letter-spacing=".06em">REWEIGHTING</text>
+        <text x="514" y="86" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">02</text>
+      </g>
+
+      <g class="loop-stage" data-i="2" id="s2">
+        <circle class="s-ring" cx="572" cy="238" r="31" fill="#0D1626" stroke="#6366F1" stroke-width="1.6"/>
+        <circle cx="572" cy="238" r="14" fill="#6366F1" opacity=".1"/>
+        <circle cx="562" cy="232" r="2.5" fill="#6366F1"/>
+        <circle cx="574" cy="225" r="2.5" fill="#6366F1"/>
+        <circle cx="582" cy="232" r="2.5" fill="#6366F1"/>
+        <circle cx="572" cy="248" r="2.5" fill="#6366F1"/>
+        <line x1="562" y1="232" x2="574" y2="225" stroke="#6366F1" stroke-width="1" opacity=".7"/>
+        <line x1="574" y1="225" x2="582" y2="232" stroke="#6366F1" stroke-width="1" opacity=".7"/>
+        <line x1="562" y1="232" x2="572" y2="248" stroke="#6366F1" stroke-width="1" opacity=".7"/>
+        <line x1="582" y1="232" x2="572" y2="248" stroke="#6366F1" stroke-width="1" opacity=".7"/>
+        <line x1="562" y1="232" x2="582" y2="232" stroke="#6366F1" stroke-width=".7" opacity=".4" stroke-dasharray="2 1"/>
+        <text x="572" y="280" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB" letter-spacing=".06em">ASSOCIATION</text>
+        <text x="572" y="291" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB" letter-spacing=".06em">EXPANSION</text>
+        <text x="572" y="195" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">03</text>
+      </g>
+
+      <g class="loop-stage" data-i="3" id="s3">
+        <circle class="s-ring" cx="514" cy="345" r="31" fill="#0D1626" stroke="#F59E0B" stroke-width="1.6"/>
+        <circle cx="514" cy="345" r="14" fill="#F59E0B" opacity=".1"/>
+        <path d="M 500 342 Q 504 336 508 342 Q 512 348 516 342 Q 520 336 524 342 Q 528 348 532 342" fill="none" stroke="#F59E0B" stroke-width="1.4" stroke-linecap="round"/>
+        <text x="514" y="387" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB" letter-spacing=".06em">MODEL</text>
+        <text x="514" y="398" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB" letter-spacing=".06em">DESTABILIZATION</text>
+        <text x="514" y="302" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">04</text>
+      </g>
+
+      <g class="loop-stage" data-i="4" id="s4">
+        <circle class="s-ring" cx="340" cy="376" r="31" fill="#0D1626" stroke="#F59E0B" stroke-width="1.6"/>
+        <circle cx="340" cy="376" r="14" fill="#F59E0B" opacity=".1"/>
+        <polygon points="340,362 351,376 340,390 329,376" fill="none" stroke="#F59E0B" stroke-width="1.4" stroke-linejoin="round"/>
+        <circle cx="340" cy="376" r="3" fill="#F59E0B" opacity=".8"/>
+        <text x="340" y="418" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB" letter-spacing=".06em">RESTRUCTURING</text>
+        <text x="340" y="429" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB" letter-spacing=".06em">OPTIMIZATION</text>
+        <text x="340" y="333" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">05</text>
+      </g>
+
+      <g class="loop-stage" data-i="5" id="s5">
+        <circle class="s-ring" cx="166" cy="345" r="31" fill="#0D1626" stroke="#A855F7" stroke-width="1.6"/>
+        <circle cx="166" cy="345" r="14" fill="#A855F7" opacity=".12"/>
+        <polygon points="166,332 168.5,342 178,345 168.5,348 166,358 163.5,348 154,345 163.5,342" fill="#A855F7" opacity=".8"/>
+        <text x="166" y="387" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB" letter-spacing=".06em">PEAK</text>
+        <text x="166" y="398" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB" letter-spacing=".06em">INTEGRATION</text>
+        <text x="166" y="302" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">06</text>
+      </g>
+
+      <g class="loop-stage" data-i="6" id="s6">
+        <circle class="s-ring" cx="108" cy="230" r="31" fill="#0D1626" stroke="#7C3AED" stroke-width="1.6"/>
+        <circle cx="108" cy="230" r="14" fill="#7C3AED" opacity=".1"/>
+        <circle cx="108" cy="230" r="11" fill="none" stroke="#7C3AED" stroke-width="1.3" opacity=".8"/>
+        <circle cx="108" cy="230" r="5.5" fill="none" stroke="#7C3AED" stroke-width="1" opacity=".6"/>
+        <circle cx="108" cy="230" r="2"   fill="#7C3AED"/>
+        <text x="108" y="272" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB" letter-spacing=".06em">RE-</text>
+        <text x="108" y="283" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB" letter-spacing=".06em">COHERENCE</text>
+        <text x="108" y="187" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">07</text>
+      </g>
+
+      <g class="loop-stage" data-i="7" id="s7">
+        <circle class="s-ring" cx="166" cy="131" r="31" fill="#0D1626" stroke="#22D3EE" stroke-width="1.6"/>
+        <circle cx="166" cy="131" r="14" fill="#22D3EE" opacity=".1"/>
+        <path d="M 157 124 Q 157 118 166 118 Q 177 118 177 127 Q 177 135 166 135 L 163 135" fill="none" stroke="#22D3EE" stroke-width="1.4" stroke-linecap="round"/>
+        <polyline points="160,132 163,135 160,138" fill="none" stroke="#22D3EE" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="166" y="173" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB" letter-spacing=".06em">EMBODIED</text>
+        <text x="166" y="184" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB" letter-spacing=".06em">INTEGRATION</text>
+        <text x="166" y="88" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">08</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="detail" id="detail">
+    <div class="d-num" style="color:var(--text3)">Select a stage above or any state region</div>
+    <div class="d-name" style="color:var(--text2);font-family:var(--font-d)">Click any node to explore its role in the system</div>
+    <div class="d-body">The core loop is recursive, not linear. Each stage feeds the next and feeds back into earlier stages. Salience shapes associations; associations drive restructuring; restructuring reshapes what salience even notices. Every completed cycle raises the resolution of the system. Watch the animated token move through stages.</div>
+  </div>
+</div>
+
+<!-- ── SECTION 3 · STATE SPACE WITH CLICKABLE REGIONS ── -->
+<div class="sec">
+  <div class="sec-label">State space — click any region to highlight in the loop · click outcomes to explore</div>
+  <svg width="100%" viewBox="0 0 680 360" xmlns="http://www.w3.org/2000/svg" aria-label="2D state space plot with clickable regions" id="stateSpaceSvg">
+    <defs>
+      <linearGradient id="zIns"  x1="0%" y1="100%" x2="100%" y2="0%">
+        <stop offset="0%"   stop-color="#3B82F6" stop-opacity=".1"/>
+        <stop offset="100%" stop-color="#3B82F6" stop-opacity=".03"/>
+      </linearGradient>
+      <linearGradient id="zPro"  x1="0%" y1="100%" x2="100%" y2="0%">
+        <stop offset="0%"   stop-color="#6366F1" stop-opacity=".1"/>
+        <stop offset="100%" stop-color="#6366F1" stop-opacity=".03"/>
+      </linearGradient>
+      <linearGradient id="zCha"  x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%"   stop-color="#EF4444" stop-opacity=".12"/>
+        <stop offset="100%" stop-color="#EF4444" stop-opacity=".03"/>
+      </linearGradient>
+      <linearGradient id="zMys"  x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%"   stop-color="#A855F7" stop-opacity=".16"/>
+        <stop offset="100%" stop-color="#A855F7" stop-opacity=".04"/>
+      </linearGradient>
+    </defs>
+
+    <!-- Axes -->
+    <line x1="78" y1="28" x2="78"  y2="316" stroke="#1A2D4A" stroke-width="1.2"/>
+    <line x1="78" y1="316" x2="648" y2="316" stroke="#1A2D4A" stroke-width="1.2"/>
+    <line x1="78" y1="172" x2="648" y2="172" stroke="#1A2D4A" stroke-width=".5" stroke-dasharray="4 5" opacity=".6"/>
+    <line x1="363" y1="28" x2="363" y2="316" stroke="#1A2D4A" stroke-width=".5" stroke-dasharray="4 5" opacity=".6"/>
+
+    <!-- Clickable Quadrants -->
+    <rect class="state-region" data-region="everyday" x="79" y="173" width="283" height="142" fill="url(#zIns)" rx="3" style="cursor:pointer"/>
+    <rect class="state-region" data-region="profound" x="364" y="173" width="283" height="142" fill="url(#zPro)" rx="3" style="cursor:pointer"/>
+    <rect class="state-region" data-region="chaos" x="79" y="29"  width="283" height="142" fill="url(#zCha)" rx="3" style="cursor:pointer"/>
+    <rect class="state-region" data-region="mystical" x="364" y="29" width="283" height="142" fill="url(#zMys)" rx="3" style="cursor:pointer"/>
+
+    <!-- Quadrant labels -->
+    <text x="95"  y="50"  font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#EF4444" opacity=".55" letter-spacing=".09em">CHAOS / PATHOLOGY</text>
+    <text x="380" y="50"  font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#A855F7" opacity=".55" letter-spacing=".09em">PARADIGM COLLAPSE / MYSTICAL</text>
+    <text x="95"  y="310" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#3B82F6" opacity=".55" letter-spacing=".09em">EVERYDAY / AHA INSIGHT</text>
+    <text x="380" y="310" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#6366F1" opacity=".55" letter-spacing=".09em">PROFOUND INSIGHT</text>
+
+    <!-- Axis labels -->
+    <text x="26" y="174" text-anchor="middle" transform="rotate(-90,26,174)" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#3D5478" letter-spacing=".09em">EMOTIONAL INTENSITY →</text>
+    <text x="363" y="345" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#3D5478" letter-spacing=".09em">COGNITIVE RESTRUCTURING →</text>
+
+    <!-- Axis tick labels -->
+    <text x="72" y="321" text-anchor="end" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">Low</text>
+    <text x="72" y="36"  text-anchor="end" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">High</text>
+    <text x="90"  y="332" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">Weak</text>
+    <text x="634" y="332" text-anchor="end" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">Strong</text>
+
+    <!-- ── Data points (clickable) ──────────────────────── -->
+    <g data-outcome="discarded" class="outcome-point" style="cursor:pointer">
+      <circle cx="130" cy="300" r="5.5" fill="#3D5478" opacity=".75"/>
+      <text x="145" y="297" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB">Discarded</text>
+    </g>
+
+    <g data-outcome="everyday" class="outcome-point" style="cursor:pointer">
+      <circle cx="148" cy="282" r="7"  fill="#3B82F6" opacity=".8"/>
+      <text x="160" y="278" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB">Everyday insight</text>
+    </g>
+
+    <g data-outcome="aha" class="outcome-point" style="cursor:pointer">
+      <circle cx="296" cy="244" r="8"  fill="#4F8EF7" opacity=".9"/>
+      <text x="308" y="240" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB">Aha! moment</text>
+    </g>
+
+    <g data-outcome="profound" class="outcome-point" style="cursor:pointer">
+      <circle cx="472" cy="222" r="9"  fill="#6366F1" opacity=".9"/>
+      <text x="485" y="218" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB">Profound insight</text>
+    </g>
+
+    <g data-outcome="paradigm" class="outcome-point" style="cursor:pointer">
+      <circle cx="496" cy="100" r="10" fill="#7C3AED" opacity=".9"/>
+      <text x="510" y="96"  font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB">Paradigm collapse</text>
+    </g>
+
+    <g data-outcome="mystical" class="outcome-point" style="cursor:pointer">
+      <circle cx="610" cy="54"  r="14" fill="#A855F7" opacity=".18"/>
+      <circle cx="610" cy="54"  r="10" fill="#A855F7" opacity=".9"/>
+      <text x="610" y="42"  text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#A855F7">Mystical</text>
+    </g>
+
+    <g data-outcome="pathology" class="outcome-point" style="cursor:pointer">
+      <circle cx="230" cy="60"  r="7"  fill="#EF4444" opacity=".65"/>
+      <text x="242" y="56"  font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB">Pathology</text>
+    </g>
+
+    <!-- Z-axis note -->
+    <text x="644" y="30" text-anchor="end" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">● size = self-boundary dissolution (Z)</text>
+
+    <!-- Phase boundary -->
+    <line x1="440" y1="28" x2="440" y2="172" stroke="#7C3AED" stroke-width=".7" stroke-dasharray="3 4" opacity=".35"/>
+    <text x="444" y="88" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#7C3AED" opacity=".5">phase boundary</text>
+    <text x="444" y="100" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#7C3AED" opacity=".5">subject-object</text>
+    <text x="444" y="112" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#7C3AED" opacity=".5">collapse →</text>
+  </svg>
+  <button class="reset-btn" id="resetStateSpace">Reset highlights</button>
+</div>
+
+<!-- ── SECTION 4 · TRAJECTORY SIMULATOR ─────────── -->
+<div class="sec">
+  <div class="sec-label">Trajectory simulator — advanced with constraint dynamics</div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.4rem">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.2rem">
+      <div>
+        <div style="font-family:var(--font-m);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Emotional / physiological intensity</div>
+        <input type="range" min="0" max="100" value="30" id="sim-emotion" style="width:100%;accent-color:var(--amber)">
+        <div style="display:flex;justify-content:space-between;font-family:var(--font-m);font-size:8px;color:var(--text3);margin-top:3px"><span>Flat</span><span id="sim-emotion-val">30</span><span>Overwhelming</span></div>
+      </div>
+      <div>
+        <div style="font-family:var(--font-m);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Cognitive restructuring depth</div>
+        <input type="range" min="0" max="100" value="25" id="sim-cognition" style="width:100%;accent-color:var(--indigo)">
+        <div style="display:flex;justify-content:space-between;font-family:var(--font-m);font-size:8px;color:var(--text3);margin-top:3px"><span>Surface</span><span id="sim-cognition-val">25</span><span>Deep</span></div>
+      </div>
+      <div>
+        <div style="font-family:var(--font-m);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Self-boundary dissolution</div>
+        <input type="range" min="0" max="100" value="10" id="sim-boundary" style="width:100%;accent-color:var(--purple)">
+        <div style="display:flex;justify-content:space-between;font-family:var(--font-m);font-size:8px;color:var(--text3);margin-top:3px"><span>Rigid</span><span id="sim-boundary-val">10</span><span>Dissolved</span></div>
+      </div>
+      <div>
+        <div style="font-family:var(--font-m);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Constraint — reality feedback</div>
+        <input type="range" min="0" max="100" value="70" id="sim-constraint" style="width:100%;accent-color:var(--cyan)">
+        <div style="display:flex;justify-content:space-between;font-family:var(--font-m);font-size:8px;color:var(--text3);margin-top:3px"><span>None</span><span id="sim-constraint-val">70</span><span>Strong</span></div>
+      </div>
+    </div>
+
+    <!-- Mini state space canvas -->
+    <svg width="100%" viewBox="0 0 540 280" id="simSvg" style="display:block">
+      <defs>
+        <linearGradient id="sz1" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#3B82F6" stop-opacity=".08"/><stop offset="100%" stop-color="#3B82F6" stop-opacity=".02"/></linearGradient>
+        <linearGradient id="sz2" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366F1" stop-opacity=".09"/><stop offset="100%" stop-color="#6366F1" stop-opacity=".02"/></linearGradient>
+        <linearGradient id="sz3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#EF4444" stop-opacity=".1"/><stop offset="100%" stop-color="#EF4444" stop-opacity=".02"/></linearGradient>
+        <linearGradient id="sz4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#A855F7" stop-opacity=".13"/><stop offset="100%" stop-color="#A855F7" stop-opacity=".03"/></linearGradient>
+      </defs>
+      <line x1="58" y1="20" x2="58" y2="248" stroke="#1A2D4A" stroke-width="1.1"/>
+      <line x1="58" y1="248" x2="520" y2="248" stroke="#1A2D4A" stroke-width="1.1"/>
+      <line x1="58" y1="134" x2="520" y2="134" stroke="#1A2D4A" stroke-width=".4" stroke-dasharray="4 5" opacity=".5"/>
+      <line x1="289" y1="20" x2="289" y2="248" stroke="#1A2D4A" stroke-width=".4" stroke-dasharray="4 5" opacity=".5"/>
+      <rect x="59" y="135" width="229" height="112" fill="url(#sz1)" rx="2"/>
+      <rect x="290" y="135" width="229" height="112" fill="url(#sz2)" rx="2"/>
+      <rect x="59" y="21" width="229" height="112" fill="url(#sz3)" rx="2"/>
+      <rect x="290" y="21" width="229" height="112" fill="url(#sz4)" rx="2"/>
+      <text x="72" y="38" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#EF4444" opacity=".5" letter-spacing=".07em">CHAOS / PATHOLOGY</text>
+      <text x="300" y="38" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#A855F7" opacity=".5" letter-spacing=".07em">PARADIGM / MYSTICAL</text>
+      <text x="72" y="244" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3B82F6" opacity=".5" letter-spacing=".07em">EVERYDAY / AHA</text>
+      <text x="300" y="244" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#6366F1" opacity=".5" letter-spacing=".07em">PROFOUND INSIGHT</text>
+      <line x1="355" y1="21" x2="355" y2="134" stroke="#7C3AED" stroke-width=".6" stroke-dasharray="3 4" opacity=".3"/>
+      <text x="18" y="134" text-anchor="middle" transform="rotate(-90,18,134)" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478" letter-spacing=".07em">EMOTIONAL INTENSITY →</text>
+      <text x="289" y="268" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478" letter-spacing=".07em">COGNITIVE RESTRUCTURING →</text>
+      <circle id="sim-point-glow" cx="150" cy="210" r="18" fill="none" stroke="#3B82F6" stroke-width=".5" opacity=".25"/>
+      <circle id="sim-point" cx="150" cy="210" r="8" fill="#3B82F6" opacity=".9"/>
+    </svg>
+
+    <!-- Outcome readout with constraint dynamics -->
+    <div style="margin-top:1rem;padding:1rem;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
+      <div id="sim-outcome-label" style="font-family:var(--font-m);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;color:var(--text3)">Predicted outcome</div>
+      <div id="sim-outcome-name" style="font-family:'DM Serif Display',Georgia,serif;font-size:1.15rem;color:#3B82F6;margin-bottom:6px">Everyday insight</div>
+      <div id="sim-outcome-body" style="font-size:11.5px;color:var(--text2);line-height:1.65">Small model update. Low disruption, quickly integrated. Consider raising emotional intensity or restructuring depth to move toward more transformative territory.</div>
+      <div id="sim-constraint-info" style="margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--border);font-size:10.5px;color:var(--text3)">Constraint strength: <span id="constraint-readout">70</span>% — <span id="constraint-note">Reality feedback strong. Reduces risk of pathology.</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SECTION 5 · OUTCOME SPECTRUM ─────────────── -->
+<div class="sec">
+  <div class="sec-label">Outcome spectrum — seven levels + mechanics</div>
+  <div class="out-grid">
+    <div class="out-card" style="--ac:#3D5478" data-outcome-full="discarded">
+      <div class="out-lv">Outcome 00</div>
+      <div class="out-name">Discarded</div>
+      <div class="out-body">Prediction error exists but restructuring cost exceeds benefit. Model patches locally or ignores the signal entirely. Classified as noise via compute cost threshold (R > 0.65).</div>
+    </div>
+    <div class="out-card" style="--ac:#3B82F6" data-outcome-full="everyday">
+      <div class="out-lv">Outcome 01</div>
+      <div class="out-name">Local / everyday insight</div>
+      <div class="out-body">Small model update. Low disruption, low cost. Associations shift in a narrow domain and are quickly integrated back into the baseline. Topology: sparse to clustered.</div>
+    </div>
+    <div class="out-card" style="--ac:#4F8EF7" data-outcome-full="aha">
+      <div class="out-lv">Outcome 02</div>
+      <div class="out-name">Aha! moment</div>
+      <div class="out-body">Moderate restructuring with emotional elevation. Feels like a sudden breakthrough or clarity. Cross-domain connections form briefly. Topology: clustered. May require integration effort to persist.</div>
+    </div>
+    <div class="out-card" style="--ac:#6366F1" data-outcome-full="profound">
+      <div class="out-lv">Outcome 03</div>
+      <div class="out-name">Profound insight</div>
+      <div class="out-body">Multiple domains reorganize simultaneously. Strong compression (C↑ ≥ 0.15 bits/element) + maintained accuracy. Topology: integrated. Cross-domain links form and persist.</div>
+    </div>
+    <div class="out-card" style="--ac:#7C3AED" data-outcome-full="paradigm">
+      <div class="out-lv">Outcome 04</div>
+      <div class="out-name">Paradigm collapse</div>
+      <div class="out-body">Core assumptions invalidated. Cognitive restructuring is extreme (depth > 75). You realize you are not just a player in the game — you are part of the code. Integration phase is demanding.</div>
+    </div>
+    <div class="out-card" style="--ac:#A855F7" data-outcome-full="mystical">
+      <div class="out-lv">Outcome 05</div>
+      <div class="out-name">Peak / mystical state</div>
+      <div class="out-body">System-wide surge. High coherence + high emotion + reduced self-boundary (Z↑). Topology may approach field-like (Q < θ_modularity, C > θ_coherence, L → θ_path). <em style="color:var(--text3);font-style:normal">One limiting regime of the system — phase transition, not continuum.</em></div>
+    </div>
+    <div class="out-card" style="--ac:#EF4444" data-outcome-full="pathology">
+      <div class="out-lv">Failure mode</div>
+      <div class="out-name">Pathology</div>
+      <div class="out-body">High intensity + low coherence + low constraint. Destabilization persists without successful restructuring. Reality feedback fails to correct emerging beliefs. System remains fragmented.<br><br>
+      <span style="font-family:var(--font-m);font-size:8.5px;color:var(--text3);display:block;margin-top:6px;line-height:1.5">
+        <strong style="color:#EF4444">SPRT simulation (N=5,000, bimodal thresholds):</strong><br>
+        50.9% → decline / pathology · 42.2% → recovery · 6.9% intermediate<br>
+        Path dependence: steady chronic stress collapses at lower total load than a single burst — timing matters as much as magnitude. Destabilization rate (β) drives outcomes faster than reconstruction rate (γ). Crises develop faster than they resolve.
+      </span></div>
+    </div>
+  </div>
+  <button class="reset-btn" id="resetOutcomes" style="margin-top:12px">Reset highlights</button>
+</div>
+
+<!-- ── SECTION 5B · FAILURE CASE WALKTHROUGHS ─────────────── -->
+<div class="sec">
+  <div class="sec-label">Failure case walkthroughs</div>
+  <div class="info-panel">
+    <strong>Why show failures:</strong> The model predicts not just successes but specific failure modes. Below are three concrete traces showing how the system can break.
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:1rem">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-d);font-size:1rem;color:#EF4444;margin-bottom:8px">High salience + low constraint → delusion</div>
+      <div style="font-family:var(--font-m);font-size:9.5px;color:var(--text2);line-height:1.6">
+        <strong>Trigger:</strong> Intense anomaly (salience ↑)<br>
+        <strong>Failure point:</strong> Low reality feedback (constraint < θ_constraint)<br>
+        <strong>Outcome:</strong> Model restructures elegantly but without validation. System believes the delusion.<br>
+        <strong>Example:</strong> Conspiracy theory that "feels true" but predicts nothing.
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-d);font-size:1rem;color:#EF4444;margin-bottom:8px">High compression + low accuracy → elegant nonsense</div>
+      <div style="font-family:var(--font-m);font-size:9.5px;color:var(--text2);line-height:1.6">
+        <strong>Trigger:</strong> Complex anomaly<br>
+        <strong>Failure point:</strong> Viability filter fails (C↑ but A↓)<br>
+        <strong>Outcome:</strong> Intellectually satisfying model that worsens predictions. Reverts to reject path.<br>
+        <strong>Example:</strong> Overfitting a theory to noise, ignoring contradictory evidence.
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-d);font-size:1rem;color:#EF4444;margin-bottom:8px">High destabilization + no recovery → fragmentation</div>
+      <div style="font-family:var(--font-m);font-size:9.5px;color:var(--text2);line-height:1.6">
+        <strong>Trigger:</strong> Extreme load (chronic stress)<br>
+        <strong>Failure point:</strong> Re-coherence stalls (stage 07 fails)<br>
+        <strong>Outcome:</strong> System remains destabilized. Pathology emerges.<br>
+        <strong>Example:</strong> Trauma response without therapeutic integration.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Attractor Landscape visualization -->
+  <div style="margin-top:2rem">
+    <div style="font-family:var(--font-m);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">Attractor landscape dynamics — how completed loops raise the sensitivity floor</div>
+    <svg width="100%" viewBox="0 0 680 200" xmlns="http://www.w3.org/2000/svg" aria-label="Attractor landscape showing rising sensitivity after each loop">
+      <defs>
+        <linearGradient id="aland1" x1="0%" y1="100%" x2="0%" y2="0%">
+          <stop offset="0%" stop-color="#3B82F6" stop-opacity=".25"/>
+          <stop offset="100%" stop-color="#3B82F6" stop-opacity=".02"/>
+        </linearGradient>
+        <linearGradient id="aland2" x1="0%" y1="100%" x2="0%" y2="0%">
+          <stop offset="0%" stop-color="#6366F1" stop-opacity=".3"/>
+          <stop offset="100%" stop-color="#6366F1" stop-opacity=".02"/>
+        </linearGradient>
+        <linearGradient id="aland3" x1="0%" y1="100%" x2="0%" y2="0%">
+          <stop offset="0%" stop-color="#A855F7" stop-opacity=".35"/>
+          <stop offset="100%" stop-color="#A855F7" stop-opacity=".02"/>
+        </linearGradient>
+      </defs>
+      <!-- Baseline (y=140 is ground) -->
+      <line x1="40" y1="140" x2="680" y2="140" stroke="#1A2D4A" stroke-width="1.2"/>
+      <!-- Potential wells / basins -->
+      <path d="M 60 140 Q 100 70 140 140" fill="url(#aland1)" stroke="none"/>
+      <text x="100" y="160" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#3D5478" letter-spacing=".05em">Loop 0</text>
+      <text x="100" y="172" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478" opacity=".6">baseline</text>
+      <circle cx="100" cy="80" r="4" fill="#3B82F6" opacity=".8"/>
+      <path d="M 150 140 L 180 140" stroke="#3B82F6" stroke-width="1.2" stroke-dasharray="3 2" opacity=".4"/>
+      <path d="M 200 120 Q 240 60 280 120" fill="url(#aland2)" stroke="none"/>
+      <text x="240" y="150" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#3D5478" letter-spacing=".05em">Loop 1</text>
+      <text x="240" y="162" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478" opacity=".6">+20% sensitivity</text>
+      <circle cx="240" cy="65" r="4" fill="#6366F1" opacity=".8"/>
+      <path d="M 290 120 L 320 120" stroke="#6366F1" stroke-width="1.2" stroke-dasharray="3 2" opacity=".4"/>
+      <path d="M 340 100 Q 380 45 420 100" fill="url(#aland3)" stroke="none"/>
+      <text x="380" y="135" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#3D5478" letter-spacing=".05em">Loop 2+</text>
+      <text x="380" y="147" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478" opacity=".6">+40% sensitivity</text>
+      <circle cx="380" cy="50" r="4" fill="#A855F7" opacity=".8"/>
+      <path d="M 480 140 L 480 70" stroke="#F59E0B" stroke-width="1.2" stroke-dasharray="3 2" opacity=".4"/>
+      <path d="M 500 140 L 500 100" stroke="#F59E0B" stroke-width="1.2" stroke-dasharray="3 2" opacity=".4"/>
+      <text x="530" y="105" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#F59E0B" letter-spacing=".05em">Same anomaly</text>
+      <text x="530" y="118" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#F59E0B" letter-spacing=".05em">triggers faster loops</text>
+    </svg>
+    <p style="font-family:var(--font-m);font-size:8.5px;color:var(--text3);letter-spacing:.06em;margin-top:6px"><strong>Insight:</strong> After each successful integration, the sensitivity floor rises. The system becomes more responsive. Deep practitioners notice smaller anomalies because the landscape of their mind has been reshaped by previous realizations.</p>
+  </div>
+
+</div>
+
+<!-- ── SECTION 5B · PATHOLOGY DYNAMICS ─────────── -->
+<div class="sec">
+  <div class="sec-label">Pathology dynamics — when the loop fails</div>
+  <div style="background:var(--surface);border-left:3px solid var(--red);border-radius:4px;padding:12px;margin:12px 0">
+    <div style="font-family:var(--font-d);font-size:0.95rem;color:var(--red);margin-bottom:8px">⚠ Stage 04 trap: High emotion + low constraint = oscillation</div>
+    <div style="font-family:var(--font-m);font-size:9.5px;color:var(--text2);line-height:1.5">
+      When constraint (reality feedback) &lt; θ_constraint, the viability filter is bypassed. New patterns emerge in destabilization (stage 04) but fail accuracy checks. The system cycles between destabilization and false confidence — unable to re-cohere because the "model" is incoherent. Recovery requires restoring constraint: external reality checks, stress tests, time validation.
+    </div>
+  </div>
+
+  <!-- SPRT outcome distribution -->
+  <div style="margin-top:1.4rem">
+    <div style="font-family:var(--font-m);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Outcome distribution — SPRT target vs. simulation v2</div>
+    <div style="display:flex;gap:16px;align-items:center;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:2px;background:rgba(239,68,68,.55)"></div><span style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--text3)">SPRT theoretical target (N=5,000)</span></div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:2px;background:rgba(239,68,68,.25);border:1px dashed rgba(239,68,68,.5)"></div><span style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--text3)">Simulation v2 actual (n=2,000)</span></div>
+    </div>
+    <svg width="100%" viewBox="0 0 680 175" xmlns="http://www.w3.org/2000/svg" aria-label="SPRT target vs simulation v2 outcome distribution comparison chart">
+      <defs>
+        <!-- Target gradients (solid) -->
+        <linearGradient id="sprtTgt1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#EF4444" stop-opacity=".8"/><stop offset="100%" stop-color="#EF4444" stop-opacity=".3"/></linearGradient>
+        <linearGradient id="sprtTgt2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#22D3EE" stop-opacity=".8"/><stop offset="100%" stop-color="#22D3EE" stop-opacity=".3"/></linearGradient>
+        <linearGradient id="sprtTgt3" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#3D5478" stop-opacity=".8"/><stop offset="100%" stop-color="#3D5478" stop-opacity=".3"/></linearGradient>
+        <!-- Sim gradients (lighter / dashed outline) -->
+        <linearGradient id="sprtSim1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#EF4444" stop-opacity=".35"/><stop offset="100%" stop-color="#EF4444" stop-opacity=".12"/></linearGradient>
+        <linearGradient id="sprtSim2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#22D3EE" stop-opacity=".35"/><stop offset="100%" stop-color="#22D3EE" stop-opacity=".12"/></linearGradient>
+        <linearGradient id="sprtSim3" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#3D5478" stop-opacity=".35"/><stop offset="100%" stop-color="#3D5478" stop-opacity=".12"/></linearGradient>
+      </defs>
+      <!-- Axes -->
+      <line x1="60" y1="16" x2="60" y2="122" stroke="#1A2D4A" stroke-width="1.2"/>
+      <line x1="60" y1="122" x2="648" y2="122" stroke="#1A2D4A" stroke-width="1.2"/>
+      <!-- Gridlines (100% = 106px range: y=16 to y=122) -->
+      <line x1="60" y1="43" x2="648" y2="43" stroke="#1A2D4A" stroke-width=".5" stroke-dasharray="4 4" opacity=".5"/>
+      <line x1="60" y1="69" x2="648" y2="69" stroke="#1A2D4A" stroke-width=".5" stroke-dasharray="4 4" opacity=".5"/>
+      <line x1="60" y1="96" x2="648" y2="96" stroke="#1A2D4A" stroke-width=".5" stroke-dasharray="4 4" opacity=".5"/>
+      <!-- Y labels -->
+      <text x="54" y="46"  text-anchor="end" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#3D5478">75%</text>
+      <text x="54" y="72"  text-anchor="end" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#3D5478">50%</text>
+      <text x="54" y="98"  text-anchor="end" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#3D5478">25%</text>
+      <text x="54" y="124" text-anchor="end" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#3D5478">0%</text>
+
+      <!-- GROUP 1: Decline -->
+      <!-- Target: 50.9% → 54px; y = 122 - 54 = 68 -->
+      <rect x="80"  y="68" width="55" height="54" fill="url(#sprtTgt1)" rx="3"/>
+      <text x="107" y="62" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#EF4444" font-weight="500">50.9%</text>
+      <!-- Sim: 40.0% → 42.4px; y = 122 - 42.4 = 79.6 -->
+      <rect x="138" y="79.6" width="55" height="42.4" fill="url(#sprtSim1)" stroke="#EF4444" stroke-width=".8" stroke-dasharray="3 2" rx="3"/>
+      <text x="165" y="74" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#EF4444" font-weight="400" opacity=".7">40.0%</text>
+      <text x="134" y="145" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#EF4444" letter-spacing=".04em">Decline / pathology</text>
+
+      <!-- GROUP 2: Recovery -->
+      <!-- Target: 42.2% → 44.7px; y = 122 - 44.7 = 77.3 -->
+      <rect x="290" y="77.3" width="55" height="44.7" fill="url(#sprtTgt2)" rx="3"/>
+      <text x="317" y="71" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#22D3EE" font-weight="500">42.2%</text>
+      <!-- Sim: 50.0% → 53.0px; y = 122 - 53.0 = 69.0 -->
+      <rect x="348" y="69.0" width="55" height="53.0" fill="url(#sprtSim2)" stroke="#22D3EE" stroke-width=".8" stroke-dasharray="3 2" rx="3"/>
+      <text x="375" y="63" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#22D3EE" font-weight="400" opacity=".7">50.0%</text>
+      <text x="334" y="145" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#22D3EE" letter-spacing=".04em">Recovery</text>
+
+      <!-- GROUP 3: Intermediate -->
+      <!-- Target: 6.9% → 7.3px; y = 122 - 7.3 = 114.7 -->
+      <rect x="500" y="114.7" width="55" height="7.3" fill="url(#sprtTgt3)" rx="2"/>
+      <text x="527" y="108" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#7B93BB" font-weight="500">6.9%</text>
+      <!-- Sim: 10.05% → 10.7px; y = 122 - 10.7 = 111.3 -->
+      <rect x="558" y="111.3" width="55" height="10.7" fill="url(#sprtSim3)" stroke="#3D5478" stroke-width=".8" stroke-dasharray="3 2" rx="1"/>
+      <text x="585" y="105" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#7B93BB" font-weight="400" opacity=".7">≈10%</text>
+      <text x="554" y="145" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#7B93BB" letter-spacing=".04em">Intermediate</text>
+
+      <!-- JSD callout -->
+      <rect x="440" y="20" width="200" height="34" rx="4" fill="#0D1626" stroke="#243D60" stroke-width="1"/>
+      <text x="540" y="33" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#7B93BB">JSD (target vs sim v2)</text>
+      <text x="540" y="46" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#10B981" font-weight="600">0.0646</text>
+    </svg>
+    <p style="font-family:var(--font-m);font-size:8.5px;color:var(--text3);letter-spacing:.06em;margin-top:8px"><strong>Solid bars = SPRT theoretical target.</strong> Dashed bars = Phase 2 simulation v2 candidate (n=2,000). The target distribution is bimodal — outcomes cluster at the poles with a meaningful intermediate mass. Simulation v2 candidate now produces a strong intermediate class and improved fit: decline cluster is 40.0% vs target, recovery cluster is 50.0% vs target, intermediate ~10.0%. JSD = 0.0646 sits well below the good-fit threshold (0.08). Path dependence remains: steady chronic stress produces collapse at lower total load than a single burst of equal magnitude.</p>
+  </div>
+</div>
+
+<!-- ── SECTION 6 · EMPIRICAL BRIDGES ───────────── -->
+<div class="sec">
+  <div class="sec-label">Empirical bridges — grounding in existing frameworks</div>
+  <div style="display:grid;grid-template-columns:1fr;gap:10px;margin-top:1rem">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-d);font-size:0.95rem;color:var(--indigo);margin-bottom:4px">🧠 Karl Friston — Free Energy Principle</div>
+      <div style="font-family:var(--font-m);font-size:9px;color:var(--text3)">Prediction error (stage 01) = free energy. Salience reweighting (stage 02) = precision weighting. Viability filter = expected free energy minimization.</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-d);font-size:0.95rem;color:var(--indigo);margin-bottom:4px">⭐ John Vervaeke — Relevance Realization</div>
+      <div style="font-family:var(--font-m);font-size:9px;color:var(--text3)">Salience reweighting (stage 02) is relevance realization. Association expansion (stage 03) is the insight cascade. The model shows what happens after relevance is realized.</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-d);font-size:0.95rem;color:var(--indigo);margin-bottom:4px">🌐 Integrated Information Theory (Tononi)</div>
+      <div style="font-family:var(--font-m);font-size:9px;color:var(--text3)">Topology progression (Q → C → L) mirrors integration level Φ. Mystical states = maximum integration. Field-like topology = one unified conscious entity.</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-d);font-size:0.95rem;color:var(--indigo);margin-bottom:4px">✨ William James & Walter Stace — Mysticism</div>
+      <div style="font-family:var(--font-m);font-size:9px;color:var(--text3)">Noetic quality (feels true) + ineffability (cannot express) emerge at phase transition (Q→0). James' four criteria are predictions of topological collapse.</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-d);font-size:0.95rem;color:var(--indigo);margin-bottom:4px">📈 Robert Kegan — Developmental Stages</div>
+      <div style="font-family:var(--font-m);font-size:9px;color:var(--text3)">Each developmental stage = raised sensitivity floor. Stage transitions occur via paradigm collapse loops. The mechanism of Kegan's stages.</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-d);font-size:0.95rem;color:var(--indigo);margin-bottom:4px">🏔️ Abraham Maslow — Peak Experience</div>
+      <div style="font-family:var(--font-m);font-size:9px;color:var(--text3)">Peak integration (stage 06) with high emotion + boundary dissolution = peak experience. Shows they are natural products of the loop, not rare exceptions.</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-d);font-size:0.95rem;color:var(--indigo);margin-bottom:4px">🔄 Self-Persistence & Reconstruction Theory (Long, 2026)</div>
+      <div style="font-family:var(--font-m);font-size:9px;color:var(--text3)">Identity stability follows the same threshold structure as realization: identity coherence C collapses sigmoidally when allostatic load L exceeds threshold T (steep transition across ~30 T-units). Stage 07 Re-coherence maps directly onto SPRT's reconstruction phase. The theoretical three-outcome divergence (50.9% decline / 42.2% recovery / 6.9% intermediate) is borne out structurally, while the current v2 candidate shows a 40.0% decline cluster, 50.0% recovery cluster, and ~10.0% intermediate mass — reflecting the explicit intermediate calibration without sacrificing the underlying categorical phase-transition character.</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-d);font-size:0.95rem;color:var(--indigo);margin-bottom:4px">⚖️ Viability-Routing Principle (Long, 2026)</div>
+      <div style="font-family:var(--font-m);font-size:9px;color:var(--text3)">Viable adaptive systems — human or artificial — require: (1) Coverage: access to mechanisms for each regime family. (2) Routing: activating the causally necessary mechanism. (3) Gating: committing only when anchoring sufficiency A(t) > θ<sub>k</sub>. The D/S/A geometry is load-bearing in both human decision-making (610 participants, d=+0.44 to +1.79) and computational social-reasoning (254 instances, 100% C-family accuracy). This model's viability filter is a direct instantiation of the Gating condition.</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-d);font-size:0.95rem;color:var(--indigo);margin-bottom:4px">🧬 Biological Computing — Third VRP Substrate Candidate (Long, 2026)</div>
+      <div style="font-family:var(--font-m);font-size:9px;color:var(--text3)">The CL1 platform (Cortical Labs, 2025–2026) constitutes a formally derivable third CRG substrate candidate. Coverage: 26 synapse-size categories across 6 timescale-separated plasticity channels. Routing: Hebbian plasticity as ρ_B, its learning signal can align with Hebbian learning near convergence under L2-regularized learning rules (Koplow et al., 2025). Gating: critical periods as biological commitment gates (DRAFT → PROVISIONAL → COMMITTED, gate fires at A_B &gt; θ_bio). Decisive cross-substrate validation — whether biological cultures produce D/S/A-isomorphic degradation signatures with human/computational substrates — remains pending. The Biological Compute Window BCW = ∫₀ᵀ L(t)dt is the correct unit of value for living compute: not FLOPS, not tokens — the area under the learning curve before the system returns to silence.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Integration pipeline mini-diagram -->
+  <div style="margin-top:1.8rem">
+    <div style="font-family:var(--font-m);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">Stage 08 detail — embodied integration pipeline</div>
+    <svg width="100%" viewBox="0 0 680 64" xmlns="http://www.w3.org/2000/svg" aria-label="Integration pipeline: four sequential stages">
+      <defs>
+        <marker id="pip-arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M1 1.5L9 5L1 8.5" fill="none" stroke="#22D3EE" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
+        </marker>
+      </defs>
+      <!-- Stage boxes -->
+      <rect x="12"  y="10" width="144" height="40" rx="5" fill="#0D1626" stroke="#1A2D4A" stroke-width="1"/>
+      <rect x="182" y="10" width="144" height="40" rx="5" fill="#0D1626" stroke="#1A2D4A" stroke-width="1"/>
+      <rect x="352" y="10" width="144" height="40" rx="5" fill="#0D1626" stroke="#1A2D4A" stroke-width="1"/>
+      <rect x="522" y="10" width="144" height="40" rx="5" fill="#0D1626" stroke="#243D60" stroke-width="1.2"/>
+      <!-- Arrows -->
+      <line x1="158" y1="30" x2="178" y2="30" stroke="#22D3EE" stroke-width=".9" marker-end="url(#pip-arw)" opacity=".5"/>
+      <line x1="328" y1="30" x2="348" y2="30" stroke="#22D3EE" stroke-width=".9" marker-end="url(#pip-arw)" opacity=".5"/>
+      <line x1="498" y1="30" x2="518" y2="30" stroke="#22D3EE" stroke-width=".9" marker-end="url(#pip-arw)" opacity=".5"/>
+      <!-- Labels -->
+      <text x="84"  y="26" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#22D3EE" letter-spacing=".05em">01 · Stabilization</text>
+      <text x="254" y="26" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#22D3EE" letter-spacing=".05em">02 · Generalization</text>
+      <text x="424" y="26" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#22D3EE" letter-spacing=".05em">03 · Behavioral</text>
+      <text x="594" y="26" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#22D3EE" letter-spacing=".05em">04 · Validation</text>
+      <text x="84"  y="40" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">Persists without trigger?</text>
+      <text x="254" y="40" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">Applies cross-context?</text>
+      <text x="424" y="40" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">Changes decisions?</text>
+      <text x="594" y="40" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="#3D5478">Survives external reality?</text>
+    </svg>
+    <p style="font-family:var(--font-m);font-size:8.5px;color:var(--text3);letter-spacing:.06em;margin-top:6px">Each stage is a necessary but not sufficient condition for the next. Failure at any point sends the system back through re-coherence. All four passed → the loop recurses at upgraded resolution.</p>
+  </div>
+<div class="sec">
+  <div class="sec-label">System modulators — four dynamic variables</div>
+  <div class="mod-grid">
+    <div class="mod-card">
+      <div class="mod-role">Amplifier</div>
+      <div class="mod-name">Emotional / physiological intensity</div>
+      <div class="mod-body">Amplifies the entire process. Low emotion + strong cognition = "interesting." The same cognition with high emotion = "this changes everything." Operationally: gain control on salience reweighting and peak integration surge amplitude.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-role">Z-axis / Phase space</div>
+      <div class="mod-name">Self-boundary stability (Z)</div>
+      <div class="mod-body">The degree to which the self is experienced as distinct from environment. Rigid = ordinary cognition. Progressively dissolved = profound insight → mystical → pathological. The critical variable separating peak states from ordinary profound insight. Topologically: triggers Q→0 and C→1 phase transition.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-role">Gatekeeper</div>
+      <div class="mod-name">Compute cost / resistance</div>
+      <div class="mod-body"><strong>R(t) = WM_sat + λ·ΔE_metabolic + β·ΔP_stability</strong><br>Working memory saturation (new model must fit ~3–4 slots) + metabolic efficiency penalty + stakes-based prediction disruption cost. Threshold: R > 0.65 → signal discarded as noise.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-role">Error correction</div>
+      <div class="mod-name">Constraint — reality feedback</div>
+      <div class="mod-body">Operationally: <strong>A (Accuracy) is the constraint.</strong> New model must reduce prediction error ≥ 10% on external validation. When compression (C) improves but accuracy (A) drops, revert to reject path. This separates genuine insight from delusion.</div>
+    </div>
+  </div>
+
+  <!-- D/S/A Composite Score -->
+  <div style="margin-top:1.4rem">
+    <div class="sec-label" style="margin-bottom:10px">D/S/A composite viability score — from the Law of Generative Control</div>
+    <div class="math-def">
+      <strong>Ascore = ∫ D(t) · S(t) · A(t) dt</strong><br><br>
+      <strong>D — Effective Dimensionality:</strong> Number of meaningfully accessible hypotheses or action branches. High D = parallel hypothesis maintenance. Low D = narrowed, rigid focus.<br>
+      <strong>S — Temporal Stability:</strong> Persistence of active interpretations under perturbation. High S = resistance to volatility. Low S = rapid but unstable updating.<br>
+      <strong>A — Constraint Anchoring:</strong> Weight of external verification vs. internal priors. High A = sensory correction dominates. Low A = internal coherence dominates (delusion risk).<br><br>
+      <strong>Empirical viability floor (from DPCA, 320 randomized scenarios):</strong><br>
+      — Systems <em>without</em> constraint anchoring collapse at <strong>Ascore ≈ 20</strong><br>
+      — Systems <em>with</em> full D/S/A integration maintain <strong>Ascore &gt; 32</strong> under high uncertainty<br>
+      — Cross-topology invariance: ER random networks collapse at c<sub>eff</sub> = 0.520; WS clustered at 0.531 — difference &lt; 1%, confirming the threshold is structural, not topological<br><br>
+      <strong>For the realization loop:</strong> States are not points — they are trajectories (D<sub>t</sub>, S<sub>t</sub>, A<sub>t</sub>). Failure corresponds to geometric collapse along one or more axes. Mystical states = high integral value with A → 0 (constraint anchoring temporarily suspended). Pathology = low integral with A remaining low.
+    </div>
+  </div>
+
+  </div>
+
+<!-- ── SECTION 7 · INDIVIDUAL DIFFERENCES ───────── -->
+<div class="sec">
+  <div class="sec-label">Individual differences — why the same anomaly produces different outcomes</div>
+  <div class="info-panel">
+    <strong>The model is a system description, not a destiny.</strong> Two people encountering an identical anomaly can end up at opposite poles of the outcome spectrum. The variables below explain why. They are not fixed — each is a target for cultivation.
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:1rem">
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:8px;padding:14px">
+      <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin-bottom:5px">Prior loop count</div>
+      <div style="font-size:12px;font-weight:700;margin-bottom:5px">Raised sensitivity floor</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.6">Each completed loop reshapes the attractor landscape. Practitioners notice smaller anomalies, process them faster, and reach deeper outcomes at lower cost. Prior loop count is the closest proxy for what traditions call "wisdom."</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--indigo);border-radius:8px;padding:14px">
+      <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--indigo);margin-bottom:5px">Baseline constraint strength</div>
+      <div style="font-size:12px;font-weight:700;margin-bottom:5px">Reality anchor</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.6">A (constraint anchoring) varies by trait. High epistemic humility, empirical orientation, and tolerance of disconfirmation = high baseline A. Low baseline A → even modest anomalies risk pathology at high emotional intensity.</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--violet);border-radius:8px;padding:14px">
+      <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--violet);margin-bottom:5px">Cognitive flexibility</div>
+      <div style="font-size:12px;font-weight:700;margin-bottom:5px">D — effective dimensionality</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.6">High trait flexibility = high D. The system can hold competing hypotheses simultaneously without collapsing to premature commitment. Low flexibility → Viability Filter defaults to the first viable model, not the best one.</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--cyan);border-radius:8px;padding:14px">
+      <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan);margin-bottom:5px">Social support density</div>
+      <div style="font-size:12px;font-weight:700;margin-bottom:5px">Re-coherence buffer</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.6">SPRT evidence: support (S) acts as a categorical switch near the critical zone. Below S≈0.50 collapse is nearly universal. Above S≈0.75 recovery is nearly guaranteed. Small increases near the boundary produce dramatic outcome shifts — the steepest leverage point in the system.</div>
+    </div>
+  </div>
+
+  <div style="margin-top:1.4rem">
+    <div style="font-family:var(--font-m);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">Induction conditions — what practitioners can actually do</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+        <div style="font-family:var(--font-d);font-size:0.9rem;color:var(--amber);margin-bottom:6px">Amplify the anomaly</div>
+        <div style="font-family:var(--font-m);font-size:8.5px;color:var(--text3);line-height:1.6">Deliberately stay with the tension instead of resolving it cheaply. Journaling, dialogue, and contemplative practice all function as anomaly amplifiers — they prevent premature local patching (R &lt; 0.65 escape).</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+        <div style="font-family:var(--font-d);font-size:0.9rem;color:var(--indigo);margin-bottom:6px">Lower restructuring cost</div>
+        <div style="font-family:var(--font-m);font-size:8.5px;color:var(--text3);line-height:1.6">Reduce WM load and metabolic stakes before entering destabilization. Rest, protected time, low-stakes context (β ≈ 0.1) all reduce R(t) — letting genuine insight through the gate without requiring overwhelming force.</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+        <div style="font-family:var(--font-d);font-size:0.9rem;color:var(--cyan);margin-bottom:6px">Strengthen re-coherence</div>
+        <div style="font-family:var(--font-m);font-size:8.5px;color:var(--text3);line-height:1.6">Secure integration contexts (trusted people, stable routines, integration practices like writing or teaching) raise S above the critical threshold. The insight is only as durable as the re-coherence environment it lands in.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SECTION: ROBUSTNESS & SENSITIVITY ─────────── -->
+<div class="sec">
+  <div class="sec-label">Robustness & sensitivity — where the model is load-bearing</div>
+  <div class="info-panel">
+    <strong>Sweep summary (48 parameter-value combinations, n=400 each):</strong> Latin Hypercube sampling (30 vectors, full parameter space) yielded JSD range 0.0499–0.1946, mean JSD 0.1041. 9/30 LHS vectors exceeded JSD > 0.12, flagging interaction instability in parts of the parameter space. <strong>Interaction robustness note:</strong> V10.2 Candidate 1 is structurally promising but not parameter-invariant; multi-parameter interactions remain a calibration target.
+  </div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:8px;padding:14px;margin-top:1rem">
+    <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);margin-bottom:6px">Key sensitivity finding — alpha3 (resistance gating)</div>
+    <div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--text)">Resistance gating is the load-bearing term</div>
+    <div style="font-size:11px;color:var(--text2);line-height:1.6">alpha3 = 0.50 → JSD = 0.1697 (crosses structural-revision threshold at > 0.15). alpha3 = 1.30 → JSD = 0.0865 (best result in sweep; approaches good-fit threshold). Lower resistance suppression produces structural misfit; stronger suppression improves fit. This makes R(t) — the resistance/compute cost term — a priority target for empirical calibration. The model's fit quality is most sensitive to how aggressively the system gates on resistance.</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:1rem">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan);margin-bottom:4px">Most robust parameter</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.5"><strong>alpha3 = 1.3</strong> → JSD = 0.0865. S_paradigm is the most stable threshold parameter (JSD range 0.1197–0.1207 across sweep values). D_pathology shows consistent improvement as value increases (0.1203 → 0.1029).</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-bottom:4px">Most fragile parameter</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.5"><strong>alpha3 = 0.5</strong> → JSD = 0.1697 (structural-revision zone). theta_wm = 0.40 → JSD = 0.1488. delta1 = 1.2 → JSD = 0.1467. These three warrant calibration priority before empirical deployment.</div>
+    </div>
+  </div>
+  <div style="margin-top:1rem;background:var(--surface2);border-left:3px solid var(--blue);padding:10px;border-radius:4px;font-family:var(--font-m);font-size:9px;color:var(--text2);line-height:1.6">
+    <strong style="color:var(--blue)">Reproducibility:</strong> baseline_results.csv MD5 = 84679bd147ca6b82f3e866737cbf696d · sweep_results.csv MD5 = 15d027ebc02bcbb55c774b826817558a · support_threshold.csv MD5 = 820ba3648ed4a1cd08fa697826ae1d50. These hashes identify the current exported V10 result files. Deterministic reruns should reproduce these hashes when seeds, parameters, code version, and export ordering are unchanged.
+  </div>
+</div>
+
+<!-- ── SECTION: WHAT WOULD BREAK THE MODEL ─────── -->
+<div class="sec">
+  <div class="sec-label">What would break the model — explicit falsification schedule</div>
+  <div class="info-panel">
+    <strong>This section is part of the model's identity.</strong> A model without falsification conditions is not a model — it is a framing device. The criteria below are pre-specified and binding. If any is met, the corresponding component requires revision before re-use.
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:1rem">
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--indigo);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--indigo);margin-bottom:4px">P1 falsified if</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.5">The D → Z → S sequence appears in fewer than 40% of Profound-or-higher trajectories. Current direct test: 68.9% — well above falsification threshold.</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--cyan);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan);margin-bottom:4px">P2 falsified if</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.5">Support linear fit R² exceeds 0.85. Current R² = 0.3195 — safely in the nonlinear zone. Would indicate support → recovery relationship is effectively linear, negating the threshold structure.</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--purple);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--purple);margin-bottom:4px">P3 falsified if</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.5">The intermediate bin exceeds either the decline or recovery polar cluster. Current intermediate ≈ 10.0% — now consistent with the SPRT borderline target while preserving bimodality. Bimodality criterion passes; current calibration now supports the intermediate bin.</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:4px">P4 falsified if</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.5">Crisis cohort pathology is not ≥5pp higher AND recovery not ≥5pp lower than controls. Current: +5.0pp / −5.1pp — both arms pass. Would indicate crisis initialization does not reliably shift outcome distribution.</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-bottom:4px">Global structure requires revision if</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.5">JSD exceeds 0.15. Current JSD = 0.0646 — below trigger. If JSD crosses 0.15 under any reparameterization intended as the canonical model, the SPRT-target connection fails and requires re-examination.</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:8px;padding:12px">
+      <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin-bottom:4px">BCW/VRP extension falsified if</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.5">Biological degradation trajectories do not align with human/computational D/S/A degradation signatures under harmonized measurement conditions in the cross-substrate test. This test is the decisive arbiter of the third-substrate claim.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SECTION: V10.2 RELEASE NOTES ───────────────── -->
+<div class="sec">
+  <div class="sec-label">V10.2 release notes — canonical status & limits</div>
+  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:1.4rem">
+    <div style="font-family:var(--font-d);font-size:1.1rem;color:var(--text);margin-bottom:1rem">V10.2 Candidate 1 release stance</div>
+    <div style="font-family:var(--font-m);font-size:10px;color:var(--text2);line-height:1.8;border-left:3px solid var(--indigo);padding-left:12px;margin-bottom:1.2rem">
+      V10.2 Candidate 1 presents a formal dynamical model of realization, tested against a pre-specified simulation target derived from SPRT and framed within the broader VRP/D/S/A geometry. Current simulation results support the predicted bimodal structure, support-threshold nonlinearity, crisis-shift direction, and D→Z→S stage sequence under the v2 parameterization. All four pre-registered predictions (P1–P4) pass current criteria. The model remains simulation-supported, not empirically completed. The biological third-substrate extension remains a formal candidate pending cross-substrate degradation testing.
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:1.2rem">
+      <div style="background:var(--surface2);border-radius:6px;padding:10px">
+        <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--emerald);margin-bottom:4px">Simulation-supported</div>
+        <div style="font-size:10px;color:var(--text2);line-height:1.5">Bimodal outcome structure (P3 ✓) · Support nonlinearity (P2 ✓) · Crisis-shift direction (P4 ✓) · JSD below structural-revision threshold</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:6px;padding:10px">
+        <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:4px">Pending calibration</div>
+        <div style="font-size:10px;color:var(--text2);line-height:1.5">Intermediate calibration now 10.0% vs SPRT target 6.9% · JSD is within the good-fit threshold (0.08), reinforcing candidate structural validity.</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:6px;padding:10px">
+        <div style="font-family:var(--font-m);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Not yet tested</div>
+        <div style="font-size:10px;color:var(--text2);line-height:1.5">Cross-substrate degradation isomorphism (biological VRP) · Empirical calibration of heuristic thresholds · Human participant data</div>
+      </div>
+    </div>
+    <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);line-height:1.7;border-top:1px solid var(--border);padding-top:12px">
+      <strong style="color:var(--text)">Canonical simulation values (v2 candidate, n=2,000):</strong><br>
+      Discarded 0.1% · Pathology 39.9% · Recovery cluster 50.0% · Intermediate 10.0%<br>
+      JSD = 0.0646 · Support R² = 0.3195 · Crisis shift: +5.0pp pathology · −5.1pp recovery<br>
+      Seq. (D→Z→S): 68.9% · Best sweep result: alpha3=1.3 → JSD=0.0865 · Worst: alpha3=0.5 → JSD=0.1697<br><br>
+      <strong style="color:var(--text)">Version:</strong> V10.2 Candidate 1 · <strong style="color:var(--text)">Date:</strong> May 2026 · <strong style="color:var(--text)">Status:</strong> Formal candidate release — simulation-supported, not empirically completed · <strong style="color:var(--text)">Companion script:</strong> phase2_simulation.py v2
+    </div>
+  </div>
+</div>
+
+<!-- ── SECTION 8 · REFERENCES ────────────────────── -->
+<div class="sec">
+  <div class="sec-label">References</div>
+  <div style="display:grid;grid-template-columns:1fr;gap:6px;margin-top:1rem">
+    <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);padding:8px 0;border-bottom:1px solid var(--border);line-height:1.7">
+      Friston, K. (2010). The free-energy principle: a unified brain theory? <em style="color:var(--text2)">Nature Reviews Neuroscience, 11</em>(2), 127–138.
+    </div>
+    <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);padding:8px 0;border-bottom:1px solid var(--border);line-height:1.7">
+      Vervaeke, J., Lillicrap, T. P., & Richards, B. A. (2012). Relevance realization and the emerging framework in cognitive science. <em style="color:var(--text2)">Journal of Logic and Computation, 22</em>(1), 79–99.
+    </div>
+    <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);padding:8px 0;border-bottom:1px solid var(--border);line-height:1.7">
+      Tononi, G. (2008). Consciousness as integrated information: a provisional manifesto. <em style="color:var(--text2)">Biological Bulletin, 215</em>(3), 216–242.
+    </div>
+    <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);padding:8px 0;border-bottom:1px solid var(--border);line-height:1.7">
+      James, W. (1902). <em style="color:var(--text2)">The Varieties of Religious Experience.</em> Longmans, Green & Co.
+    </div>
+    <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);padding:8px 0;border-bottom:1px solid var(--border);line-height:1.7">
+      Stace, W. T. (1960). <em style="color:var(--text2)">Mysticism and Philosophy.</em> Macmillan.
+    </div>
+    <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);padding:8px 0;border-bottom:1px solid var(--border);line-height:1.7">
+      Kegan, R. (1982). <em style="color:var(--text2)">The Evolving Self: Problem and Process in Human Development.</em> Harvard University Press.
+    </div>
+    <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);padding:8px 0;border-bottom:1px solid var(--border);line-height:1.7">
+      Maslow, A. H. (1964). <em style="color:var(--text2)">Religions, Values, and Peak-Experiences.</em> Ohio State University Press.
+    </div>
+    <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);padding:8px 0;border-bottom:1px solid var(--border);line-height:1.7">
+      Long, R. (2026). Self-Persistence and Reconstruction Theory (SPRT): Identity coherence under allostatic load. <em style="color:var(--text2)">Manuscript in preparation.</em>
+    </div>
+    <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);padding:8px 0;border-bottom:1px solid var(--border);line-height:1.7">
+      Long, R. (2026). The Law of Generative Control Under Uncertainty: D/S/A geometry and the Viability-Routing Principle. <em style="color:var(--text2)">Preprint, April 2026.</em>
+    </div>
+    <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);padding:8px 0;border-bottom:1px solid var(--border);line-height:1.7">
+      Long, R. (2026). A Third Substrate for the Viability-Routing Principle: Biological Computing as a Coverage-Routing-Gating System. <em style="color:var(--text2)">Companion paper, May 2026.</em>
+    </div>
+    <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);padding:8px 0;border-bottom:1px solid var(--border);line-height:1.7">
+      Kagan, B. J., Kitchen, A. C., et al. (2022). In vitro neurons learn and exhibit sentience when embodied in a simulated game-world. <em style="color:var(--text2)">Neuron, 115</em>(14), 2410–2424.
+    </div>
+    <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);padding:8px 0;border-bottom:1px solid var(--border);line-height:1.7">
+      Khajehnejad, M., et al. (2025). Dynamic network plasticity and sample efficiency in biological neural cultures: a comparative study with deep reinforcement learning. <em style="color:var(--text2)">CB Systems.</em>
+    </div>
+    <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);padding:8px 0;border-bottom:1px solid var(--border);line-height:1.7">
+      Koplow, D. A., Poggio, T., & Ziyin, L. (2025). Homeostatic ubiquity of Hebbian dynamics in regularized learning rules. <em style="color:var(--text2)">arXiv:2505.18069. MIT / NTT Research.</em>
+    </div>
+    <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);padding:8px 0;border-bottom:1px solid var(--border);line-height:1.7">
+      Sejnowski, T., Bartol, T., et al. (2016 / 2024). Synaptic storage capacity: 4.7 bits per synapse, 26 discrete size categories. <em style="color:var(--text2)">Salk Institute / eLife 4:e10778.</em>
+    </div>
+    <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);padding:8px 0;line-height:1.7">
+      Cortical Labs (2025–2026). CL1 biological computer. <em style="color:var(--text2)">corticallabs.com/cl1</em>
+    </div>
+  </div>
+</div>
+<div class="formula">
+  Realization = detection of tension → recursive reweighting of attention → expansion + reorganization of associations → stabilization into a new model<br>
+  amplified by emotion · modulated by self-boundary stability · gated by compute cost (WM + metabolic + stability penalty) · constrained by reality feedback (accuracy > compression conflict resolution)<br><br>
+  Viability metric: Ascore = ∫D(t)·S(t)·A(t)dt · floor Ascore &gt; 32 · collapse threshold ceff ≈ 0.52–0.53 (DPCA, &lt;1% topology variance)<br>
+  Commitment ladder: Draft → Provisional [A &gt; θ_prov] → Committed [A &gt; θ_commit] · reject path → Re-coherence<br>
+  Four necessary conditions: explore without dissolving · commit without freezing · sense degradation · recover from error<br>
+  Outcome distribution (SPRT, N=5,000 bimodal target): 50.9% decline · 42.2% recovery · 6.9% intermediate · simulation v2 candidate (n=2,000): 40.0% decline · 50.0% recovery · 10.0% intermediate · JSD=0.0646<br>
+  Phase 2 pre-registration: P1 ✓ (stage-sequence pass) · P2 ✓ R²=0.3195 · P3 ✓ bimodality criterion passes · P4 ✓ (+5.0pp path ✓, −5.1pp rec ✓)<br>
+  VRP third substrate candidate: biological compute · BCW = ∫₀ᵀ L(t)dt · Coverage (26 synapse categories) · Routing (Hebbian alignment under L2-regularized learning) · Gating (critical periods) · cross-substrate test pending · mortality is coverage-maintenance, not failure<br>
+  V10.2 Candidate 1 status: simulation-supported, not empirically completed · alpha3 load-bearing (best JSD 0.0865 at alpha3=1.3) · intermediate ≈ 10% calibrated · JSD 0.0646 = good fit
+</div>
+
+<script>
+// ── Stage coordinates for animation ───────────────
+const stageCoords = [
+  {x: 340, y: 80},   // 01 Prediction Error
+  {x: 514, y: 131},  // 02 Salience Reweighting
+  {x: 572, y: 238},  // 03 Association Expansion
+  {x: 514, y: 345},  // 04 Model Destabilization
+  {x: 340, y: 376},  // 05 Restructuring
+  {x: 166, y: 345},  // 06 Peak Integration
+  {x: 108, y: 230},  // 07 Re-coherence
+  {x: 166, y: 131}   // 08 Embodied Integration
+];
+
+// Ring center — used to curve token path outward
+const ringCenter = {x: 340, y: 228};
+
+// Quadratic bezier with outward-pushed control point so token hugs the ring
+function bezierArc(p0, p1, t, pushDist) {
+  const mx = (p0.x + p1.x) / 2;
+  const my = (p0.y + p1.y) / 2;
+  const dx = mx - ringCenter.x;
+  const dy = my - ringCenter.y;
+  const len = Math.sqrt(dx * dx + dy * dy) || 1;
+  const push = pushDist !== undefined ? pushDist : 28;
+  const cx = mx + (dx / len) * push;
+  const cy = my + (dy / len) * push;
+  const x = (1-t)*(1-t)*p0.x + 2*(1-t)*t*cx + t*t*p1.x;
+  const y = (1-t)*(1-t)*p0.y + 2*(1-t)*t*cy + t*t*p1.y;
+  return {x, y};
+}
+
+// ── Animate token through loop ─────────────────────
+let tokenProgress = 0;
+let isPaused = false;
+function animateToken() {
+  const token = document.getElementById('loopToken');
+  const circles = token.querySelectorAll('circle');
+
+  if (!isPaused) {
+    // Ease in/out within each segment for organic movement
+    const stageNum = Math.floor(tokenProgress % stageCoords.length);
+    const nextStageNum = (stageNum + 1) % stageCoords.length;
+    const raw = tokenProgress % 1;
+    const t = raw < 0.5 ? 2*raw*raw : -1+(4-2*raw)*raw; // ease in-out
+
+    const curr = stageCoords[stageNum];
+    const next = stageCoords[nextStageNum];
+    const pos  = bezierArc(curr, next, t);
+
+    circles.forEach(c => {
+      c.setAttribute('cx', pos.x);
+      c.setAttribute('cy', pos.y);
+    });
+
+    tokenProgress += 0.0035; // slightly slower for readability
+  }
+  requestAnimationFrame(animateToken);
+}
+animateToken();
+
+// ── Stage data ────────────────────────────────────
+const stages = [
+  {
+    color:"#3B82F6",
+    name:"Prediction Error",
+    role:"01 — Trigger",
+    body:"The signal that the current model is failing. An anomaly, contradiction, or tension is detected — something existing frameworks cannot cleanly explain. The system's prediction is violated. Distinct from ordinary surprise: here the error exceeds the model's ability to patch locally, forcing the loop to engage.",
+    from:"Embodied Integration (upgraded sensitivity — each loop raises the resolution)",
+    to:"Salience Reweighting"
+  },
+  {
+    color:"#4F8EF7",
+    name:"Salience Reweighting",
+    role:"02 — Attention Shift",
+    body:"Attention reweights toward the anomaly. What was background becomes figure. The error doesn't just register — it reorganizes what the system notices next. This is altered salience: the world looks different before you have understood why. Feeds back from restructuring: new models change what you notice.",
+    from:"Prediction Error / Restructuring feedback",
+    to:"Association Expansion"
+  },
+  {
+    color:"#6366F1",
+    name:"Association Expansion",
+    role:"03 — Network Growth",
+    body:"As attention explores the anomaly, new links form — often cross-domain. Things that seemed unrelated start to connect. This is the topology change from sparse to clustered. The topology is not just denser: it is structurally reorganizing. Driven entirely by the reweighted salience map from stage 02.",
+    from:"Salience Reweighting",
+    to:"Model Destabilization"
+  },
+  {
+    color:"#F59E0B",
+    name:"Model Destabilization",
+    role:"04 — Entropy Spike",
+    body:"The old framework partially 'melts' before a new one solidifies. Temporary increase in uncertainty: prediction error now exceeds current model capacity. The Valley of Confusion. This stage is often distressing — but is structurally necessary. Without it, deep restructuring cannot occur. High-plasticity state; priors weaken.",
+    from:"Association Expansion overloading existing structure",
+    to:"Restructuring / Optimization"
+  },
+  {
+    color:"#F59E0B",
+    name:"Restructuring / Optimization",
+    role:"05 — Viability Filter",
+    body:"A new pattern crystallizes under the formal commitment ladder: <strong>DRAFT → PROVISIONAL → COMMITTED</strong>. DRAFT: candidate model formed, revisable at zero cost. PROVISIONAL: partial anchoring sufficient (A > θ_prov) — commitment revisable at moderate cost. COMMITTED: full anchoring sufficiency (A > θ_commit) — irreversible or costly to reverse. The viability filter runs at each transition: the new model must satisfy Compression (ΔC > θ_compress), Accuracy (MAE ↓ ≥ θ_accuracy), and Actionability. Accuracy is the primary constraint — compression that worsens prediction reverts to reject. The reject path loops back to Stage 07 Re-coherence. Most genuine insights spend time in PROVISIONAL before full commitment; skipping it is the computational signature of delusion.",
+    from:"Model Destabilization",
+    to:"Peak Integration (if viable) / Discard (if not)",
+    note:"Criteria conflict resolution: Accuracy is the primary constraint. A model that compresses elegantly but predicts poorly reverts to the reject path. Tiebreaker: Actionability breaks accuracy ties."
+  },
+  {
+    color:"#A855F7",
+    name:"Peak Integration",
+    role:"06 — Surge State",
+    body:"A surge of coherence. The range here spans Aha! to mystical, depending on emotional intensity and self-boundary stability. Strong noetic quality at high intensity: it feels like truth, not just insight. At peak intensity with boundary dissolution, paradigm collapse and mystical states emerge. Network topology shifts toward field-like (Q→0, C→1, L→1).",
+    from:"Restructuring + Emotional / Physiological Amplification",
+    to:"Re-coherence"
+  },
+  {
+    color:"#7C3AED",
+    name:"Re-coherence",
+    role:"07 — Stabilization",
+    body:"After peak or destabilization, the system must reconstruct into a usable operating model. Without Re-coherence, the system remains unstable or fragments into pathology. This is the biological rebound — the attractor landscape settles into its new shape. Can the new framework persist without the triggering state? SPRT simulation evidence: support (S) acts as a categorical switch near the critical zone — below S≈0.50 collapse is nearly universal; above S≈0.75 recovery is nearly guaranteed. The transition is steep, not gradual: small increases in social support near the boundary produce dramatic outcome shifts. Path dependence operates here — steady chronic stress depletes re-coherence capacity faster than intermittent acute stress at identical total magnitude.",
+    from:"Peak Integration",
+    to:"Embodied Integration"
+  },
+  {
+    color:"#22D3EE",
+    name:"Embodied Integration",
+    role:"08 — Proof of Persistence",
+    body:"The new framework must survive contact with reality. Pipeline: Stabilization (persists without the trigger?) → Generalization (applies across contexts?) → Behavioral encoding (changes decisions?) → Social/external validation (survives others?). Without this, even a mystical experience is just 'fireworks.' Completion feeds back to stage 01 with upgraded prediction sensitivity — the loop recurses at higher resolution.",
+    from:"Re-coherence",
+    to:"Prediction Error (upgraded sensitivity — the loop recurses)"
+  }
+];
+
+// ── Stage interaction ──────────────────────────────
+const detail = document.getElementById('detail');
+
+document.querySelectorAll('.loop-stage').forEach(el => {
+  el.addEventListener('click', function() {
+    const i = parseInt(this.dataset.i);
+    const s = stages[i];
+    document.querySelectorAll('.s-ring').forEach(r => r.style.filter = '');
+    const ring = this.querySelector('.s-ring');
+    ring.style.filter = `drop-shadow(0 0 10px ${s.color}99)`;
+    detail.style.borderColor = s.color + '55';
+    detail.innerHTML = `
+      <div class="d-num" style="color:${s.color}">${s.role}</div>
+      <div class="d-name" style="color:${s.color}">${s.name}</div>
+      <div class="d-body">${s.body}</div>
+      ${s.note ? `<div class="d-body" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);color:var(--text3)">${s.note}</div>` : ''}
+      <div class="d-meta">
+        <span class="dtag">← fed by: ${s.from}</span>
+        <span class="dtag">feeds into: ${s.to} →</span>
+      </div>
+    `;
+    isPaused = !isPaused;
+  });
+  el.addEventListener('mouseenter', function() {
+    this.querySelector('.s-ring').style.strokeWidth = '2.2';
+  });
+  el.addEventListener('mouseleave', function() {
+    if (!this.querySelector('.s-ring').style.filter) {
+      this.querySelector('.s-ring').style.strokeWidth = '1.6';
+    }
+  });
+});
+
+// ── Cross-linking: topology ────────────────────────
+document.querySelectorAll('.topo-click').forEach(el => {
+  el.addEventListener('click', function() {
+    const topo = this.dataset.topo;
+    const topoOutcomeMap = {
+      'sparse': ['everyday'],
+      'clustered': ['everyday', 'aha'],
+      'integrated': ['profound'],
+      'fieldlike': ['mystical', 'paradigm']
+    };
+    highlightOutcomes(topoOutcomeMap[topo]);
+    document.getElementById('stateSpaceSvg').classList.add('crosslink-active');
+    setTimeout(() => document.getElementById('stateSpaceSvg').classList.remove('crosslink-active'), 200);
+  });
+  el.addEventListener('mouseenter', function() { this.style.opacity = '.8'; });
+  el.addEventListener('mouseleave', function() { this.style.opacity = '1'; });
+});
+
+// ── Cross-linking maps ─────────────────────────────
+const regionOutcomeMap = {
+  'everyday': ['everyday', 'aha'],
+  'profound': ['profound'],
+  'mystical': ['mystical', 'paradigm'],
+  'chaos': ['pathology']
+};
+
+// ── Cross-linking: state space regions ──────────────
+document.querySelectorAll('.state-region').forEach(el => {
+  el.addEventListener('click', function() {
+    const region = this.dataset.region;
+    highlightOutcomes(regionOutcomeMap[region]);
+  });
+});
+
+// ── Cross-linking: outcome cards ───────────────────
+document.querySelectorAll('.out-card').forEach(el => {
+  el.addEventListener('click', function() {
+    const outcome = this.dataset['outcome-full'];
+    highlightOutcomes([outcome]);
+    document.querySelectorAll('.out-card').forEach(c => c.style.opacity = '.4');
+    this.style.opacity = '1';
+    // highlight regions
+    document.querySelectorAll('.state-region').forEach(r => r.style.opacity = '.3');
+    const regionsForOutcome = Object.keys(regionOutcomeMap).filter(region => regionOutcomeMap[region].includes(outcome));
+    regionsForOutcome.forEach(region => {
+      document.querySelector(`.state-region[data-region="${region}"]`).style.opacity = '1';
+    });
+  });
+  el.addEventListener('mouseenter', function() { this.style.transform = 'scale(1.02)'; });
+  el.addEventListener('mouseleave', function() { this.style.transform = 'scale(1)'; });
+});
+
+function highlightOutcomes(outcomes) {
+  document.querySelectorAll('.outcome-point').forEach(p => p.style.opacity = '.2');
+  outcomes.forEach(o => {
+    document.querySelectorAll(`[data-outcome="${o}"]`).forEach(p => {
+      p.style.opacity = '1';
+      p.style.filter = 'drop-shadow(0 0 8px rgba(255,255,255,.4))';
+    });
+  });
+}
+
+// ── Trajectory Simulator ──────────────────────────
+const simOutcomes = [
+  { name:"Discarded",         color:"#3D5478", body:"Restructuring cost exceeds benefit (R > 0.65). Raise intensity or deepen the anomaly." },
+  { name:"Everyday insight",  color:"#3B82F6", body:"Small model update, low disruption. Topology: sparse→clustered. Consider raising intensity or depth." },
+  { name:"Aha! moment",       color:"#4F8EF7", body:"Local problem solved with moderate emotional charge. Cross-domain links form briefly." },
+  { name:"Profound insight",  color:"#6366F1", body:"Multiple domains reorganize. Strong compression (ΔC>0.15). Topology: integrated (Q~0.12)." },
+  { name:"Paradigm collapse", color:"#7C3AED", body:"Core assumptions invalidated. Extreme cognitive restructuring (depth>75). Reality survives, context doesn't." },
+  { name:"Peak / mystical",   color:"#A855F7", body:"System-wide surge with boundary dissolution. Topology: field-like (Q≈0, C≈0.95). Phase transition, not continuum." },
+  { name:"Pathology",         color:"#EF4444", body:"High emotion + low coherence + low constraint. Destabilization without restructuring. Reality feedback fails." }
+];
+
+function classifyOutcome(emotion, cognition, boundary, constraint) {
+  if (emotion > 55 && cognition < 45 && constraint < 35) return 6;
+  if (emotion > 65 && cognition > 70 && boundary > 60 && constraint > 50) return 5;
+  if (cognition > 75 && emotion > 55) return 4;
+  if (cognition > 45 && emotion > 30) return 3;
+  if (cognition > 30 && emotion > 25) return 2;
+  if (cognition > 10 || emotion > 10) return 1;
+  return 0;
+}
+
+function updateSimulator() {
+  const emotion    = parseInt(document.getElementById('sim-emotion').value);
+  const cognition  = parseInt(document.getElementById('sim-cognition').value);
+  const boundary   = parseInt(document.getElementById('sim-boundary').value);
+  const constraint = parseInt(document.getElementById('sim-constraint').value);
+
+  document.getElementById('sim-emotion-val').textContent = emotion;
+  document.getElementById('sim-cognition-val').textContent = cognition;
+  document.getElementById('sim-boundary-val').textContent = boundary;
+  document.getElementById('sim-constraint-val').textContent = constraint;
+
+  const x = 58 + (cognition / 100) * 462;
+  const y = 248 - (emotion / 100) * 228;
+  const r = 6 + (boundary / 100) * 12;
+
+  const idx = classifyOutcome(emotion, cognition, boundary, constraint);
+  const outcome = simOutcomes[idx];
+
+  const pt = document.getElementById('sim-point');
+  const ptGlow = document.getElementById('sim-point-glow');
+  pt.setAttribute('cx', x);
+  pt.setAttribute('cy', y);
+  pt.setAttribute('r', r);
+  pt.setAttribute('fill', outcome.color);
+  ptGlow.setAttribute('cx', x);
+  ptGlow.setAttribute('cy', y);
+  ptGlow.setAttribute('r', r + 10);
+  ptGlow.setAttribute('stroke', outcome.color);
+
+  document.getElementById('sim-outcome-name').textContent = outcome.name;
+  document.getElementById('sim-outcome-name').style.color = outcome.color;
+  document.getElementById('sim-outcome-body').textContent = outcome.body;
+
+  // highlight outcome card and regions
+  const outcomeFulls = ['discarded', 'everyday', 'aha', 'profound', 'paradigm', 'mystical', 'pathology'];
+  const outcomeFull = outcomeFulls[idx];
+  document.querySelectorAll('.out-card').forEach(c => c.style.opacity = '.4');
+  document.querySelector(`.out-card[data-outcome-full="${outcomeFull}"]`).style.opacity = '1';
+  document.querySelectorAll('.state-region').forEach(r => r.style.opacity = '.3');
+  const regionsForOutcome = Object.keys(regionOutcomeMap).filter(region => regionOutcomeMap[region].includes(outcomeFull));
+  regionsForOutcome.forEach(region => {
+    document.querySelector(`.state-region[data-region="${region}"]`).style.opacity = '1';
+  });
+
+  document.getElementById('constraint-readout').textContent = constraint;
+  let constraintNote = '';
+  if (constraint < 30) {
+    constraintNote = "Weak reality feedback. High risk of delusion or pathology.";
+  } else if (constraint < 60) {
+    constraintNote = "Moderate feedback. Some risk of false certainty in high-intensity states.";
+  } else {
+    constraintNote = "Reality feedback strong. Reduces risk of pathology. Enables confident transformation.";
+  }
+  document.getElementById('constraint-note').textContent = constraintNote;
+}
+
+function resetHighlights() {
+  document.querySelectorAll('.outcome-point').forEach(p => {
+    p.style.opacity = '1';
+    p.style.filter  = '';
+  });
+  document.querySelectorAll('.out-card').forEach(c => { c.style.opacity = '1'; });
+}
+
+document.getElementById('resetStateSpace').addEventListener('click', resetHighlights);
+document.getElementById('resetOutcomes').addEventListener('click', resetHighlights);
+
+['sim-emotion','sim-cognition','sim-boundary','sim-constraint'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateSimulator);
+});
+updateSimulator();
+
+// ── Feedback arc interactivity ────────────────────
+const loopSvg = document.getElementById('loopSvg') || document.querySelector('.loop-svg');
+const feedbackArcs = document.querySelectorAll('.feedback-arc');
+
+feedbackArcs.forEach(arc => {
+  arc.addEventListener('mouseenter', function() {
+    loopSvg.classList.add('feedback-active');
+    this.classList.add('active');
+    feedbackArcs.forEach(a => {
+      if (a !== this) a.classList.remove('active');
+    });
+  });
+  arc.addEventListener('mouseleave', function() {
+    loopSvg.classList.remove('feedback-active');
+    this.classList.remove('active');
+  });
+});
+
+// Reset feedback on click elsewhere
+document.addEventListener('click', function(e) {
+  if (!e.target.matches('.feedback-arc')) {
+    loopSvg.classList.remove('feedback-active');
+    feedbackArcs.forEach(a => a.classList.remove('active'));
+  }
+});
+</script>
+</body>
+</html>
